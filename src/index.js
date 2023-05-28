@@ -1,10 +1,10 @@
-const express = require("express");
-
 require("dotenv").config();
 
-const app = express();
+import express from "express";
+import routes from "./routes";
+import db from "./db";
 
-const routes = require("./routes");
+const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -13,7 +13,9 @@ const port = process.env.APP_PORT;
 
 app.use("/", routes);
 
-app.listen(port, () => {
+app.listen(port, async () => {
+  await db.connect();
+
   console.log(`Connected on port ${port}...`);
 });
 
