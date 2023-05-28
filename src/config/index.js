@@ -1,5 +1,3 @@
-require("dotenv").config();
-
 import Joi from "@hapi/joi";
 
 const envVarsSchema = Joi.object({
