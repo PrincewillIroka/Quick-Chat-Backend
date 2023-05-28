@@ -8,15 +8,16 @@ const envVarsSchema = Joi.object({
   DB_PASSWORD: Joi.string(),
   DB_AUTH_SOURCE: Joi.string(),
   DB_CONNECTION: Joi.string(),
+  FRONTEND_APP_URL: Joi.string(),
 })
   .unknown(true)
   .required();
 
-const { error, value: envVars } = envVarsSchema.validate(process.env);
+const { value: envVars } = envVarsSchema.validate(process.env);
 
 export default {
   host: process.env.APP_HOST,
-  port: process.env.PORT,
+  port: process.env.APP_PORT,
   environment: process.env.NODE_ENV,
   db: {
     pass: envVars.DB_PASSWORD,
@@ -26,4 +27,5 @@ export default {
     authSource: envVars.DB_AUTH_SOURCE,
     dbConnection: envVars.DB_CONNECTION,
   },
+  frontendAppUrl: process.env.FRONTEND_APP_URL,
 };

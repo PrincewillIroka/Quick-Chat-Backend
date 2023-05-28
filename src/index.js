@@ -5,19 +5,27 @@ import http from "http";
 import { Server } from "socket.io";
 import cookie from "cookie";
 import { v4 as uuidv4 } from "uuid";
+import cors from "cors";
 
+import config from "./config";
 import routes from "./routes";
 import db from "./db";
+import sockets from "./sockets";
 
 const app = express();
 
-const port = process.env.APP_PORT;
+const port = config.port;
 
 const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: config.frontendAppUrl,
+  })
+);
 
 app.use("/", routes);
 
@@ -40,15 +48,17 @@ const handleCookie = (headers, isConnectionEvent) => {
   });
 };
 
+// called during the socket handshake
 io.engine.on("initial_headers", (headers, request) => {
   headers["set-cookie"] = handleCookie(request.headers);
 });
 
-io.on("connection", (socket, request) => {
+io.on("connection", (socket) => {
   socket.handshake.headers["set-cookie"] = handleCookie(
     socket.handshake.headers,
     true
   );
+  sockets(io);
 });
 
 server.listen(port, async () => {
