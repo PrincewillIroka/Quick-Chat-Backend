@@ -6,6 +6,8 @@ import { Server } from "socket.io";
 import cookie from "cookie";
 import { v4 as uuidv4 } from "uuid";
 import cors from "cors";
+import cookieParser from "cookie-parser";
+import bodyParser from "body-parser";
 
 import config from "./config";
 import routes from "./routes";
@@ -20,12 +22,13 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: config.frontendAppUrl,
   })
 );
+app.use(cookieParser());
 
 app.use("/", routes);
 
@@ -40,12 +43,11 @@ const handleCookie = (headers, isConnectionEvent) => {
   }
 
   if (isConnectionEvent) {
-    console.log("a user connected", bs_token);
+    // console.log(bs_token);
+    console.log("a user connected");
   }
 
-  return cookie.serialize("bs_token", bs_token, {
-    sameSite: "none",
-  });
+  return cookie.serialize("bs_token", bs_token);
 };
 
 // called during the socket handshake
