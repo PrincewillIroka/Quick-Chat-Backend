@@ -1,13 +1,17 @@
-function myChats(req, res) {
+import Chat from "../models/Chat";
+
+const getChats = async (req, res) => {
   try {
     const bs_token = req.query.bs_token;
-    console.log("bs_token", bs_token);
+    const chats = await Chat.find({
+      $or: [{ creator_id: bs_token }, { participants: bs_token }],
+    });
 
-    res.send("Hey");
+    res.send({ chats });
   } catch (error) {
     console.error(error);
     res.status(500);
   }
-}
+};
 
-export { myChats };
+export { getChats };
