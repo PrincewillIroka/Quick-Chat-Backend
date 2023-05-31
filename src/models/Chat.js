@@ -6,10 +6,7 @@ const ChatShema = new mongoose.Schema(
     creator_id: ObjectId,
     chat_url: String,
     participants: [{ type: ObjectId, ref: "User" }],
-    messages: {
-      type: [Object],
-      default: [],
-    },
+    messages: { sender: { type: ObjectId, ref: "User" } },
   },
   { usePushEach: true, timestamps: true }
 );

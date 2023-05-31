@@ -11,7 +11,16 @@ const getChats = async (req, res) => {
     const chats = await Chat.find({
       $or: [{ creator_id: user_id }, { participants: { $in: [user_id] } }],
     })
-      .populate(["participants"])
+      .populate([
+        {
+          path: "participants",
+          select: ["name", "photo"],
+        },
+        {
+          path: "messages.sender",
+          select: ["name", "photo"],
+        },
+      ])
       .exec()
       .then((chatsFound) => chatsFound);
 
