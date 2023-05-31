@@ -1,13 +1,11 @@
 import mongoose from "mongoose";
+const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const ChatShema = new mongoose.Schema(
   {
-    creator_id: String,
+    creator_id: ObjectId,
     chat_url: String,
-    participants: {
-      type: [String],
-      default: [],
-    },
+    participants: [{ type: ObjectId, ref: "User" }],
     messages: {
       type: [Object],
       default: [],
