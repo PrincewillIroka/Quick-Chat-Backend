@@ -1,9 +1,10 @@
 import Chat from "../models/Chat";
 import User from "../models/User";
+import { handleToken, getTokenFromCookie } from "../utils";
 
 const getChats = async (req, res) => {
   try {
-    const bs_token = req.query.bs_token;
+    const bs_token = getTokenFromCookie(req.headers);
 
     const user = await User.findOne({ bs_token });
     const user_id = user?._id;
@@ -31,4 +32,22 @@ const getChats = async (req, res) => {
   }
 };
 
-export { getChats };
+const authenticateUser = async (req, res) => {
+  try {
+    const bs_token = handleToken(req.headers);
+    res
+      .cookie("bs_token", bs_token, {
+        path: "/",
+        sameSite: "lax",
+        httpOnly: false,
+        secure: false,
+        maxAge: 34560000000,
+      })
+      .status(200)
+      .json({ value: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+  }
+};
+export { getChats, authenticateUser };

@@ -8,7 +8,7 @@ import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
 
 import config from "./config";
-import routes from "./routes";
+import router from "./routes";
 import db from "./db";
 import sockets from "./sockets";
 
@@ -23,12 +23,13 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cors({
+    credentials: true,
     origin: config.frontendAppUrl,
   })
 );
 app.use(cookieParser());
 
-app.use("/", routes);
+app.use("/api", router);
 
 server.listen(port, async () => {
   await db.connect();
