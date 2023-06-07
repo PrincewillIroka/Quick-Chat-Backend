@@ -5,10 +5,8 @@ import { handleToken, getTokenFromCookie } from "../utils";
 const getChats = async (req, res) => {
   try {
     const bs_token = getTokenFromCookie(req.headers);
-
     const user = await User.findOne({ bs_token });
     const user_id = user?._id;
-
     const chats = await Chat.find({
       $or: [{ creator_id: user_id }, { participants: { $in: [user_id] } }],
     })
@@ -35,6 +33,9 @@ const getChats = async (req, res) => {
 const authenticateUser = async (req, res) => {
   try {
     const bs_token = handleToken(req.headers);
+
+    const user = await User.findOne({ bs_token });
+
     res
       .cookie("bs_token", bs_token, {
         path: "/",
@@ -44,10 +45,13 @@ const authenticateUser = async (req, res) => {
         maxAge: 34560000000,
       })
       .status(200)
-      .json({ value: true });
+      .json({ user });
   } catch (error) {
     console.error(error);
     res.status(500);
   }
 };
+
+const getUser = async () => {};
+
 export { getChats, authenticateUser };
