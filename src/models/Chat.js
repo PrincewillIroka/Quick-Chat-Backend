@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 const ObjectId = mongoose.Schema.Types.ObjectId;
-const ObjectIdType = mongoose.Types.ObjectId;
 
 const ChatShema = new mongoose.Schema(
   {
@@ -17,6 +16,7 @@ const ChatShema = new mongoose.Schema(
         createdAt: { type: Date, default: Date.now },
       },
     ],
+    chat_name: String,
   },
   { usePushEach: true, timestamps: true }
 );
