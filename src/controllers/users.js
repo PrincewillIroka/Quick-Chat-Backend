@@ -1,6 +1,7 @@
 import Chat from "../models/Chat";
 import User from "../models/User";
 import { handleToken, getTokenFromCookie } from "../utils";
+import config from "../config";
 
 const getChats = async (req, res) => {
   try {
@@ -62,10 +63,13 @@ const authenticateUser = async (req, res) => {
 
     const user = await User.findOne({ bs_token });
 
+    const { environment = "", frontendAppUrl = "" } = config;
+
     res
       .cookie("bs_token", bs_token, {
         path: "/",
-        sameSite: "None",
+        domain: environment === "production" ? frontendAppUrl : "localhost",
+        sameSite: "lax",
         httpOnly: false,
         secure: false,
         maxAge: 34560000000,
