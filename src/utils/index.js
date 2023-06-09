@@ -10,6 +10,7 @@ const generateChatUrl = () => {
 };
 
 const getTokenFromCookie = (headers) => {
+  console.log({ headers });
   const { cookie: cookieHeaders } = headers;
 
   const { bs_token } = cookieHeaders ? cookie.parse(cookieHeaders) : {};
