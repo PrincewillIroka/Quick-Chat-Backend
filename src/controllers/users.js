@@ -4,10 +4,12 @@ import { handleToken, getTokenFromCookie } from "../utils";
 
 const getChats = async (req, res) => {
   try {
+    const { chatUrlParam = "" } = req.query;
     const bs_token = getTokenFromCookie(req.headers);
+
     const user = await User.findOne({ bs_token });
     const user_id = user?._id;
-    const chats = await Chat.find({
+    let chats = await Chat.find({
       $or: [{ creator_id: user_id }, { participants: { $in: [user_id] } }],
     })
       .populate([
@@ -20,8 +22,32 @@ const getChats = async (req, res) => {
           select: ["name", "photo"],
         },
       ])
+      .lean()
       .exec()
       .then((chatsFound) => chatsFound);
+
+    if (chatUrlParam) {
+      const isChatFound = chats.find((chat) => chat.chat_url === chatUrlParam);
+
+      if (!isChatFound) {
+        const foundChat = await Chat.findOne({
+          chat_url: chatUrlParam,
+        })
+          .populate([
+            {
+              path: "participants",
+              select: ["name", "photo"],
+            },
+            {
+              path: "messages.sender",
+              select: ["name", "photo"],
+            },
+          ])
+          .exec()
+          .then((chatFound) => chatFound);
+        chats = [...chats, foundChat];
+      }
+    }
 
     res.send({ chats });
   } catch (error) {
