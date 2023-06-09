@@ -69,7 +69,7 @@ const authenticateUser = async (req, res) => {
       .cookie("bs_token", bs_token, {
         path: "/",
         domain: environment === "production" ? frontendAppUrl : "localhost",
-        sameSite: "lax",
+        sameSite: environment === "production" ? "none" : "lax",
         httpOnly: false,
         secure: false,
         maxAge: 34560000000,
