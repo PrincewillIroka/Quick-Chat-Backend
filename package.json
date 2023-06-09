@@ -26,5 +26,8 @@
     "@babel/preset-env": "^7.22.2",
     "@babel/register": "^7.21.0",
     "env-cmd": "^10.1.0"
+  },
+  "engines": {
+    "node": ">=14.20.1"
   }
 }
