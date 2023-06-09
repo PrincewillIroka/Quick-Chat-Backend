@@ -58,7 +58,7 @@ const getChats = async (req, res) => {
 
 const authenticateUser = async (req, res) => {
   try {
-    const bs_token = handleToken(req.headers);
+    const bs_token = await handleToken(req.headers);
 
     const user = await User.findOne({ bs_token });
 
