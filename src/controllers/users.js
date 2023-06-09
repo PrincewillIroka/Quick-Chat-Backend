@@ -63,13 +63,10 @@ const authenticateUser = async (req, res) => {
 
     const user = await User.findOne({ bs_token });
 
-    const { environment = "", frontendAppUrl = "" } = config;
-
     res
       .cookie("bs_token", bs_token, {
         path: "/",
-        domain: environment === "production" ? frontendAppUrl : "localhost",
-        sameSite: environment === "production" ? "none" : "lax",
+        sameSite: "lax",
         httpOnly: false,
         secure: false,
         maxAge: 34560000000,
