@@ -65,7 +65,7 @@ const authenticateUser = async (req, res) => {
     res
       .cookie("bs_token", bs_token, {
         path: "/",
-        sameSite: "lax",
+        sameSite: "None",
         httpOnly: false,
         secure: false,
         maxAge: 34560000000,
