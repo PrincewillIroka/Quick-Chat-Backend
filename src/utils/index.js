@@ -1,5 +1,6 @@
 import cookie from "cookie";
 import { v4 as uuidv4 } from "uuid";
+import User from "../models/User";
 
 const generateChatUrl = () => {
   return Array(45)
@@ -16,7 +17,7 @@ const getTokenFromCookie = (headers) => {
   return bs_token;
 };
 
-const handleToken = (headers) => {
+const handleToken = async (headers) => {
   let bs_token = getTokenFromCookie(headers);
 
   // valdateToken()
@@ -24,6 +25,9 @@ const handleToken = (headers) => {
   if (!bs_token) {
     const uidv4 = uuidv4();
     bs_token = `${uidv4}_${Date.now()}`;
+
+    // Create new user here
+    await User.create({ bs_token, name: "New User" });
   }
 
   return bs_token;
