@@ -2,7 +2,7 @@
   "scripts": {
     "lint": "eslint .",
     "start": "export $(xargs < .env) && node dist/index.js",
-    "build": "rm -rf dist && mkdir dist && npm i @babel/cli @babel/core && babel src -s -d dist",
+    "build": "rm -rf dist && mkdir dist && babel src -s -d dist",
     "dev": "env-cmd -f .env.local --fallback nodemon --exec babel-node src/index.js"
   },
   "dependencies": {
