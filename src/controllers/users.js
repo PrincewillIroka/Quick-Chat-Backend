@@ -1,12 +1,12 @@
 import Chat from "../models/Chat";
 import User from "../models/User";
 import { handleToken, getTokenFromCookie } from "../utils";
-import config from "../config";
+// import config from "../config";
 
 const getChats = async (req, res) => {
   try {
-    const { chatUrlParam = "" } = req.query;
-    const bs_token = getTokenFromCookie(req.headers);
+    const { bs_token = "", chatUrlParam = "" } = req.body;
+    // const bs_token = getTokenFromCookie(req.headers);
 
     const user = await User.findOne({ bs_token });
     const user_id = user?._id;
@@ -59,23 +59,30 @@ const getChats = async (req, res) => {
 
 const authenticateUser = async (req, res) => {
   try {
-    const bs_token = await handleToken(req.headers);
+    // const bs_token = await handleToken(req.headers);
+    let { bs_token } = req.body;
+
+    if (!bs_token) {
+      bs_token = await handleToken();
+    }
 
     const user = await User.findOne({ bs_token });
 
-    const { environment = "", frontendAppUrl = "" } = config;
+    // const { environment = "", frontendAppUrl = "" } = config;
 
-    res
-      .cookie("bs_token", bs_token, {
-        path: "/",
-        domain: environment === "production" ? frontendAppUrl : "localhost",
-        sameSite: "none",
-        httpOnly: false,
-        secure: true,
-        maxAge: 34560000000,
-      })
-      .status(200)
-      .json({ user });
+    // res
+    //   .cookie("bs_token", bs_token, {
+    //     path: "/",
+    //     domain: environment === "production" ? frontendAppUrl : "localhost",
+    //     sameSite: "none",
+    //     httpOnly: false,
+    //     secure: true,
+    //     maxAge: 34560000000,
+    //   })
+    //   .status(200)
+    //   .json({ user });
+
+    res.send({ user });
   } catch (error) {
     console.error(error);
     res.status(500);

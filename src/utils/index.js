@@ -10,7 +10,6 @@ const generateChatUrl = () => {
 };
 
 const getTokenFromCookie = (headers) => {
-  console.log({ headers });
   const { cookie: cookieHeaders } = headers;
 
   const { bs_token } = cookieHeaders ? cookie.parse(cookieHeaders) : {};
@@ -18,10 +17,12 @@ const getTokenFromCookie = (headers) => {
   return bs_token;
 };
 
-const handleToken = async (headers) => {
-  let bs_token = getTokenFromCookie(headers);
+const handleToken = async () => {
+  // let bs_token = getTokenFromCookie(headers);
 
   // valdateToken()
+
+  let bs_token;
 
   if (!bs_token) {
     const uidv4 = uuidv4();
