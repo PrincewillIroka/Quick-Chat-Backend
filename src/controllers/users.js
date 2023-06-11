@@ -23,6 +23,7 @@ const getChats = async (req, res) => {
           select: ["name", "photo"],
         },
       ])
+      .sort([["updatedAt", -1]])
       .lean()
       .exec()
       .then((chatsFound) => chatsFound);
