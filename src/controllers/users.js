@@ -28,13 +28,23 @@ const getChats = async (req, res) => {
       .exec()
       .then((chatsFound) => chatsFound);
 
-    if (chatUrlParam) {
+    const chatExists = await Chat.exists({ chat_url: chatUrlParam });
+
+    if (chatExists) {
       const isChatFound = chats.find((chat) => chat.chat_url === chatUrlParam);
 
       if (!isChatFound) {
-        const foundChat = await Chat.findOne({
-          chat_url: chatUrlParam,
-        })
+        //Add user as chat participant
+        const foundChat = await Chat.findOneAndUpdate(
+          {
+            chat_url: chatUrlParam,
+          },
+          {
+            $push: {
+              participants: user_id,
+            },
+          }
+        )
           .populate([
             {
               path: "participants",
