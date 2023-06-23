@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
+import fileUpload from "express-fileupload";
 
 import config from "./config";
 import router from "./routes";
@@ -28,6 +29,14 @@ app.use(
   })
 );
 app.use(cookieParser());
+app.use(
+  fileUpload({ useTempFiles: false, limits: { fileSize: 5 * 1024 * 1024 } })
+);
+app.use(function (req, res, next) {
+  // pass socket io as a property of req
+  req.io = io;
+  next();
+});
 
 app.use("/api", router);
 
