@@ -14,6 +14,7 @@ const ChatShema = new mongoose.Schema(
         content: String,
         sender: { type: ObjectId, ref: "User" },
         createdAt: { type: Date, default: Date.now },
+        attachments: [{ type: ObjectId, ref: "File" }],
       },
     ],
     chat_name: String,

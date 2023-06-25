@@ -1,8 +1,10 @@
+import fs from "fs";
+import path from "path";
 import { generateChatUrl } from "../utils";
 import Chat from "../models/Chat";
 import File from "../models/File";
-import fs from "fs";
-import path from "path";
+import mongoose from "mongoose";
+const ObjectIdType = mongoose.Types.ObjectId;
 
 const createChat = async (req, res) => {
   try {
@@ -33,7 +35,7 @@ const createChat = async (req, res) => {
 
 const uploadFile = async (req, res) => {
   try {
-    const { chat_id, sender_id } = req.body;
+    const { chat_id, sender_id, messageId } = req.body;
     const files = req.files;
 
     const folder_path = `static/chat_images/${chat_id}`;
@@ -43,31 +45,66 @@ const uploadFile = async (req, res) => {
       fs.mkdirSync(staticFolder, { recursive: true });
     }
 
-    for (const file of Object.values(files)) {
-      const { name: fileName, data } = file;
-      const url = `${folder_path}/${fileName}`;
+    (async () => {
+      for (const [key, value] of Object.entries(files)) {
+        await handleFileUpload(key, value);
+      }
 
-      // Todo: If file exists, append a number to filename to avoid duplicates
-      fs.writeFile(url, data, (err, rs) => {
-        if (err) throw err;
-        req.io.sockets.emit("uploadedFileSuccess", { chat_id, sender_id });
-      });
+      async function handleFileUpload(key, value) {
+        const { data, ...rest } = value;
+        const { name: file_name, mimetype, size } = rest;
+        const file_url = `${folder_path}/${file_name}`;
 
-      // Todo: Switch file upload to use readable & writeable stream
-      // const readableStream = fs.createReadStream().from(data);
-      // const writeableStream = fs.createWriteStream(url);
+        // Todo: If file exists, append a number to filename to avoid duplicates
+        fs.writeFile(file_url, data, async (err, rs) => {
+          if (err) throw err;
 
-      // let writtenData = 0;
+          //Create new File in db
+          const newFile = await File.create({
+            chat_id,
+            sender: sender_id,
+            file_details: { file_name, mimetype, size, file_url },
+          });
 
-      // readableStream.on("data", (data) => {
-      //   writeableStream.write(data, () => {
-      //     writtenData += data.length;
-      //     console.log("Has read", writtenData);
-      //   });
-      // });
-    }
+          //Add file _id to attachments array in messages
+          let chat = await Chat.findOneAndUpdate(
+            {
+              _id: chat_id,
+              $or: [
+                { creator_id: sender_id },
+                { participants: { $in: [sender_id] } },
+              ],
+              "messages._id": messageId,
+            },
+            { $push: { "messages.$.attachments": newFile._id } },
+            { new: true }
+          );
 
-    res.send({});
+          req.io.sockets.emit("uploadedFileSuccess", {
+            chat_id,
+            sender_id,
+            messageId,
+            attachmentKey: key,
+            file_url,
+          });
+        });
+
+        // Todo: Switch file upload to use readable & writeable stream
+        // const readableStream = fs.createReadStream().from(data);
+        // const writeableStream = fs.createWriteStream(url);
+
+        // let writtenData = 0;
+
+        // readableStream.on("data", (data) => {
+        //   writeableStream.write(data, () => {
+        //     writtenData += data.length;
+        //     console.log("Has read", writtenData);
+        //   });
+        // });
+      }
+    })();
+
+    res.send({ success: true });
   } catch (error) {
     console.error(error);
     res.status(500);

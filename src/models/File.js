@@ -5,7 +5,7 @@ const FileShema = new mongoose.Schema(
   {
     file_details: Object,
     sender: { type: ObjectId, ref: "User" },
-    chat_id: String,
+    chat_id: { type: ObjectId, ref: "Chat" },
   },
   { usePushEach: true, timestamps: true }
 );

@@ -22,6 +22,9 @@ const getChats = async (req, res) => {
           path: "messages.sender",
           select: ["name", "photo"],
         },
+        {
+          path: "messages.attachments",
+        },
       ])
       .sort([["updatedAt", -1]])
       .lean()
@@ -53,6 +56,9 @@ const getChats = async (req, res) => {
             {
               path: "messages.sender",
               select: ["name", "photo"],
+            },
+            {
+              path: "messages.attachments",
             },
           ])
           .exec()
