@@ -3,8 +3,7 @@ import path from "path";
 import { generateChatUrl } from "../utils";
 import Chat from "../models/Chat";
 import File from "../models/File";
-import mongoose from "mongoose";
-const ObjectIdType = mongoose.Types.ObjectId;
+import { uploader } from "../services";
 
 const createChat = async (req, res) => {
   try {
@@ -53,7 +52,7 @@ const uploadFile = async (req, res) => {
       async function handleFileUpload(key, value) {
         const { data, ...rest } = value;
         const { name, mimetype, size } = rest;
-        const file_url = `${folder_path}/${name}`;
+        // const file_url = `${folder_path}/${name}`;
 
         //Create new File in db
         const newFile = await File.create({
@@ -64,22 +63,30 @@ const uploadFile = async (req, res) => {
             name,
             mimetype,
             size,
-            file_url,
+            // file_url,
             key,
             isUploading: "In Progress",
           },
         });
 
         // Todo: If file exists, append a number to filename to avoid duplicates
-        fs.writeFile(file_url, data, async (err, rs) => {
-          if (err) throw err;
 
+        // Use this as an alternative for local file upload
+        // fs.writeFile(file_url, data, async (err, rs) => {
+        //   if (err) throw err;
+        // });
+
+        await uploader(value.tempFilePath, chat_id).then(async (result) => {
+          const file_url = result.url;
           const newFileId = newFile._id;
 
           const updatedFile = await File.findOneAndUpdate(
             { _id: newFileId },
             {
-              $set: { "attachment.isUploading": "Completed" },
+              $set: {
+                "attachment.isUploading": "Completed",
+                "attachment.file_url": file_url,
+              },
             },
             { new: true }
           );
