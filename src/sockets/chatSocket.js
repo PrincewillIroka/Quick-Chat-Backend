@@ -12,13 +12,13 @@ const chatSocket = (socket) => {
 
   socket.on("newMessageSent", async (arg, ack) => {
     const { chat_url, chat_id, content, sender_id } = arg;
-    const messageId = new ObjectIdType();
+    const message_id = new ObjectIdType();
 
     const newMessage = {
       content,
       sender: sender_id,
       createdAt: new Date(),
-      _id: messageId,
+      _id: message_id,
     };
 
     let updatedChat = await Chat.findByIdAndUpdate(
@@ -46,7 +46,7 @@ const chatSocket = (socket) => {
       .then((chat) => (chat ? chat.toJSON() : chat))
       .catch((err) => console.error(err));
 
-    ack({ messageSent: true, updatedChat, messageId });
+    ack({ messageSent: true, updatedChat, message_id });
     socket.broadcast.to(chat_url).emit("newMessageReceived", { updatedChat });
   });
 };

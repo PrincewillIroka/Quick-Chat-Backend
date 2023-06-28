@@ -35,7 +35,7 @@ const createChat = async (req, res) => {
 
 const uploadFile = async (req, res) => {
   try {
-    const { chat_id, sender_id, messageId } = req.body;
+    const { chat_id, sender_id, message_id } = req.body;
     const files = req.files;
 
     const folder_path = `static/chat_images/${chat_id}`;
@@ -52,41 +52,53 @@ const uploadFile = async (req, res) => {
 
       async function handleFileUpload(key, value) {
         const { data, ...rest } = value;
-        const { name: file_name, mimetype, size } = rest;
-        const file_url = `${folder_path}/${file_name}`;
+        const { name, mimetype, size } = rest;
+        const file_url = `${folder_path}/${name}`;
+
+        //Create new File in db
+        const newFile = await File.create({
+          sender: sender_id,
+          chat_id,
+          message_id,
+          attachment: {
+            name,
+            mimetype,
+            size,
+            file_url,
+            key,
+            isUploading: "In Progress",
+          },
+        });
 
         // Todo: If file exists, append a number to filename to avoid duplicates
         fs.writeFile(file_url, data, async (err, rs) => {
           if (err) throw err;
 
-          //Create new File in db
-          const newFile = await File.create({
-            chat_id,
-            sender: sender_id,
-            file_details: { file_name, mimetype, size, file_url },
-          });
+          const newFileId = newFile._id;
+
+          const updatedFile = await File.findOneAndUpdate(
+            { _id: newFileId },
+            {
+              $set: { "attachment.isUploading": "Completed" },
+            },
+            { new: true }
+          );
 
           //Add file _id to attachments array in messages
-          let chat = await Chat.findOneAndUpdate(
+          await Chat.findOneAndUpdate(
             {
               _id: chat_id,
               $or: [
                 { creator_id: sender_id },
                 { participants: { $in: [sender_id] } },
               ],
-              "messages._id": messageId,
+              "messages._id": message_id,
             },
-            { $push: { "messages.$.attachments": newFile._id } },
+            { $push: { "messages.$.attachments": newFileId } },
             { new: true }
           );
 
-          req.io.sockets.emit("uploadedFileSuccess", {
-            chat_id,
-            sender_id,
-            messageId,
-            attachmentKey: key,
-            file_url,
-          });
+          req.io.sockets.emit("uploadedFileSuccess", updatedFile);
         });
 
         // Todo: Switch file upload to use readable & writeable stream
