@@ -30,10 +30,10 @@ const handleToken = async () => {
     bs_token = `${uidv4}_${Date.now()}`;
 
     // Create new user here
-    const hasNotUpdatedUsername = await User.countDocuments({
-      name: /New User/i,
+    const usersThatHaveNotUpdatedUsername = await User.countDocuments({
+      hasUpdatedUsername: false,
     });
-    const userNameIndex = hasNotUpdatedUsername + 1;
+    const userNameIndex = usersThatHaveNotUpdatedUsername + 1;
     const user = await User.create({
       bs_token,
       name: `New User ${userNameIndex}`,
