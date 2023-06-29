@@ -35,14 +35,26 @@ const createChat = async (req, res) => {
 const uploadFile = async (req, res) => {
   try {
     const { chat_id, sender_id, message_id } = req.body;
-    const files = req.files;
+    const files = req.files || [];
 
-    const folder_path = `static/chat_images/${chat_id}`;
+    const totalFileSize = Object.values(files).reduce(
+      (acc, cur) => acc + cur.size,
+      0
+    );
 
-    const staticFolder = path.join(process.cwd(), folder_path);
-    if (!fs.existsSync(staticFolder)) {
-      fs.mkdirSync(staticFolder, { recursive: true });
+    if (totalFileSize > 5000000) {
+      return res.send({
+        success: false,
+        message: `Maximum size for files is 5MB.`,
+      });
     }
+
+    // const folder_path = `static/chat_images/${chat_id}`;
+
+    // const staticFolder = path.join(process.cwd(), folder_path);
+    // if (!fs.existsSync(staticFolder)) {
+    //   fs.mkdirSync(staticFolder, { recursive: true });
+    // }
 
     (async () => {
       for (const [key, value] of Object.entries(files)) {
