@@ -106,6 +106,21 @@ const authenticateUser = async (req, res) => {
   }
 };
 
-const getUser = async () => {};
+const updateUser = async (req, res) => {
+  try {
+    const { username, user_id } = req.body;
 
-export { getChats, authenticateUser };
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: user_id },
+      { name: username },
+      { new: true }
+    );
+
+    res.send({ user: updatedUser });
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+  }
+};
+
+export { getChats, authenticateUser, updateUser };
