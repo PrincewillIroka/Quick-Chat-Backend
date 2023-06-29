@@ -30,7 +30,14 @@ const handleToken = async () => {
     bs_token = `${uidv4}_${Date.now()}`;
 
     // Create new user here
-    const user = await User.create({ bs_token, name: "New User" });
+    const hasNotUpdatedUsername = await User.countDocuments({
+      name: /New User/i,
+    });
+    const userNameIndex = hasNotUpdatedUsername + 1;
+    const user = await User.create({
+      bs_token,
+      name: `New User ${userNameIndex}`,
+    });
     const creator_id = user._id;
     const participants = [creator_id];
     const chat_url = generateChatUrl();
