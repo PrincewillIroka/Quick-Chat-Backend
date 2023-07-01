@@ -3,6 +3,7 @@ import Chat from "../models/Chat";
 import User from "../models/User";
 import { handleToken } from "../utils";
 import config from "../config";
+import { uploader } from "../services";
 
 const getChats = async (req, res) => {
   try {
@@ -109,11 +110,19 @@ const authenticateUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const { username, user_id } = req.body;
+    const { username: name, user_id } = req.body;
+    const files = req.files || [];
+    const file = Object.values(files)[0];
+    let photoUrl;
+
+    if (file) {
+      const uploadResult = await uploader(file.tempFilePath, user_id);
+      photoUrl = uploadResult.url;
+    }
 
     const updatedUser = await User.findOneAndUpdate(
       { _id: user_id },
-      { name: username },
+      { ...(name && { name }), ...(photoUrl && { photo: photoUrl }) },
       { new: true }
     );
 
