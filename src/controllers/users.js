@@ -1,6 +1,7 @@
+import { v4 as uuidv4 } from "uuid";
 import Chat from "../models/Chat";
 import User from "../models/User";
-import { handleToken, getTokenFromCookie } from "../utils";
+import { handleToken } from "../utils";
 import config from "../config";
 
 const getChats = async (req, res) => {
@@ -125,11 +126,15 @@ const updateUser = async (req, res) => {
 
 const setUpChatBot = async () => {
   const chatBot = await User.findOne({ isChatBot: true });
-  const photo = `${config.serverAddress}/assets/quickchat-bot-photo.jpeg`;
   if (!chatBot) {
+    const photo = `${config.serverAddress}/api/assets/quickchat-bot-photo.jpeg`;
+    const uidv4 = uuidv4();
+    const bs_token = `${uidv4}_${Date.now()}`;
+
     await User.create({
       name: "QuickChat Bot",
       photo,
+      bs_token,
       isChatBot: true,
       hasUpdatedUsername: true,
     });

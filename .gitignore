@@ -133,3 +133,5 @@ package-lock.json
 
 /static
 /tmp
+
+.DS_Store
