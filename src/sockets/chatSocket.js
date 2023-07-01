@@ -47,7 +47,12 @@ const chatSocket = (socket) => {
       .catch((err) => console.error(err));
 
     ack({ messageSent: true, updatedChat, message_id });
+
+    //To do 1: Broadcast this socket event to updatedChat.participants instead of broadcasting it to only
+    // those in the chat_url channel/group
     socket.broadcast.to(chat_url).emit("newMessageReceived", { updatedChat });
+
+    //To do 2: Change this updatedChat result to send only the content of the updated message
   });
 };
 
