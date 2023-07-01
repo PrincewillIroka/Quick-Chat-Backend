@@ -6,6 +6,7 @@ const UserShema = new mongoose.Schema(
     photo: String,
     bs_token: String,
     hasUpdatedUsername: { type: Boolean, default: false },
+    isChatBot: { type: Boolean, default: false },
   },
   { usePushEach: true, timestamps: true }
 );

@@ -9,6 +9,7 @@ const envVarsSchema = Joi.object({
   DB_AUTH_SOURCE: Joi.string(),
   DB_CONNECTION: Joi.string(),
   FRONTEND_APP_URL: Joi.string(),
+  SERVER_ADDRESS: Joi.string(),
 })
   .unknown(true)
   .required();
@@ -33,4 +34,5 @@ export default {
     api_key: envVars.CLOUDINARY_API_KEY,
     api_secret: envVars.CLOUDINARY_API_SECRET,
   },
+  serverAddress: process.env.SERVER_ADDRESS,
 };

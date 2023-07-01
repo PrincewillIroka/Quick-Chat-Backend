@@ -1,7 +1,7 @@
 import Chat from "../models/Chat";
 import User from "../models/User";
 import { handleToken, getTokenFromCookie } from "../utils";
-// import config from "../config";
+import config from "../config";
 
 const getChats = async (req, res) => {
   try {
@@ -123,4 +123,17 @@ const updateUser = async (req, res) => {
   }
 };
 
-export { getChats, authenticateUser, updateUser };
+const setUpChatBot = async () => {
+  const chatBot = await User.findOne({ isChatBot: true });
+  const photo = `${config.serverAddress}/assets/quickchat-bot-photo.jpeg`;
+  if (!chatBot) {
+    await User.create({
+      name: "QuickChat Bot",
+      photo,
+      isChatBot: true,
+      hasUpdatedUsername: true,
+    });
+  }
+};
+
+export { getChats, authenticateUser, updateUser, setUpChatBot };
