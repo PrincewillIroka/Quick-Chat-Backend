@@ -11,7 +11,7 @@ async function uploader(file, folder_id) {
   return new Promise((resolve, reject) => {
     cloudinary.v2.uploader.upload(
       file,
-      { folder: folder_id },
+      { folder: folder_id, resource_type: "auto" },
       function (error, result) {
         if (error) {
           reject(error);

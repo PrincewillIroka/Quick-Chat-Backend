@@ -88,9 +88,7 @@ const uploadFile = async (req, res) => {
         //   if (err) throw err;
         // });
 
-        await uploader(value.tempFilePath, chat_id, {
-          resource_type: "auto",
-        }).then(async (result) => {
+        await uploader(value.tempFilePath, chat_id).then(async (result) => {
           const file_url = result.url;
           const newFileId = newFile._id;
 
