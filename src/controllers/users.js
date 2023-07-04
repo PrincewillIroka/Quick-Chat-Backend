@@ -136,7 +136,9 @@ const updateUser = async (req, res) => {
 const setUpChatBot = async () => {
   const chatBot = await User.findOne({ isChatBot: true });
   if (!chatBot) {
-    const photo = `${config.serverAddress}/api/assets/quickchat-bot-photo.jpeg`;
+    // const photo = `${config.serverAddress}/api/assets/quickchat-bot-photo.jpeg`;
+    const photo =
+      "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688341854/assets/mytxrieabnapp4csyghj.avif";
     const uidv4 = uuidv4();
     const bs_token = `${uidv4}_${Date.now()}`;
 
