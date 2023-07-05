@@ -3,7 +3,7 @@
     "lint": "eslint .",
     "start": "export $(xargs < .env) && node dist/index.js",
     "build": "rm -rf dist tmp && mkdir dist && npm i -g @babel/cli @babel/core && babel src -s -d dist",
-    "dev": "rm -rf tmp abc && env-cmd -f .env.local --fallback nodemon --ignore static/ --exec babel-node src/index.js"
+    "dev": "rm -rf tmp && env-cmd -f .env.local --fallback nodemon --ignore static/ --exec babel-node src/index.js"
   },
   "dependencies": {
     "@babel/plugin-transform-runtime": "^7.22.2",
@@ -33,5 +33,11 @@
   },
   "engines": {
     "node": ">=14.20.1"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "static/*",
+      "tmp/*"
+    ]
   }
 }

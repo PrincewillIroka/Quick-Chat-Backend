@@ -21,7 +21,7 @@ const chatSocket = (socket) => {
       _id: message_id,
     };
 
-    let updatedChat = await Chat.findByIdAndUpdate(
+    const updatedChat = await Chat.findByIdAndUpdate(
       chat_id,
       {
         $push: {
@@ -43,16 +43,24 @@ const chatSocket = (socket) => {
           path: "messages.attachments",
         },
       ])
-      .then((chat) => (chat ? chat.toJSON() : chat))
-      .catch((err) => console.error(err));
+      .lean();
 
-    ack({ messageSent: true, updatedChat, message_id });
+    newMessage.sender = { _id: sender_id };
+    ack({ messageSent: true, chat_id, message_id, newMessage });
+
+    
+    const chatMessages = updatedChat.messages;
+    const newMessageForReceiver = chatMessages.find(
+      (msg) => msg._id == message_id.toString()
+    );
 
     //To do 1: Broadcast this socket event to updatedChat.participants instead of broadcasting it to only
     // those in the chat_url channel/group
-    socket.broadcast.to(chat_url).emit("newMessageReceived", { updatedChat });
-
-    //To do 2: Change this updatedChat result to send only the content of the updated message
+    socket.broadcast.to(chat_url).emit("newMessageReceived", {
+      chat_id,
+      message_id,
+      newMessage: newMessageForReceiver,
+    });
   });
 };
 

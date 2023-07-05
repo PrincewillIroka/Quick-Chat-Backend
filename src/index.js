@@ -43,7 +43,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(
-  fileUpload({ useTempFiles: true, limits: { fileSize: 5 * 1024 * 1024 } })
+  fileUpload({
+    useTempFiles: config.environment !== "production" ? false : true,
+    limits: { fileSize: 5 * 1024 * 1024 },
+  })
 );
 app.use(function (req, res, next) {
   // pass socket io as a property of req
@@ -53,6 +56,10 @@ app.use(function (req, res, next) {
 
 app.use("/api", router);
 app.use("/api/assets", express.static(path.join(__dirname, "assets")));
+app.use(
+  "/api/static",
+  express.static(path.join(__dirname, "../static/chat_images"))
+);
 
 server.listen(port, async () => {
   await db.connect();
