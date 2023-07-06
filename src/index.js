@@ -55,7 +55,7 @@ app.use(function (req, res, next) {
 });
 
 app.use("/api", router);
-app.use("/api/assets", express.static(path.join(__dirname, "assets")));
+app.use("/api/assets", express.static(path.join(__dirname, "../assets")));
 app.use(
   "/api/static",
   express.static(path.join(__dirname, "../static/chat_images"))

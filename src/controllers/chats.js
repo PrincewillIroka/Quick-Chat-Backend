@@ -113,7 +113,7 @@ const uploadFile = async (req, res) => {
           { new: true }
         );
 
-        //Add file _id to attachments array in messages
+        //Adds newFileId to attachments array in messages
         await Chat.findOneAndUpdate(
           {
             _id: chat_id,

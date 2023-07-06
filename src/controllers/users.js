@@ -1,4 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+import path from "path";
 import Chat from "../models/Chat";
 import User from "../models/User";
 import { handleToken } from "../utils";
@@ -116,8 +118,29 @@ const updateUser = async (req, res) => {
     let photoUrl;
 
     if (file) {
-      const uploadResult = await uploader(file.tempFilePath, user_id);
-      photoUrl = uploadResult.url;
+      if (config.environment !== "production") {
+        // Local file upload
+        const folder_path = `assets/${user_id}`;
+
+        const staticFolder = path.join(process.cwd(), folder_path);
+        if (!fs.existsSync(staticFolder)) {
+          fs.mkdirSync(staticFolder, { recursive: true });
+        }
+
+        const file_name = new Date().valueOf();
+        const file_path = `${folder_path}/${file_name}`;
+        photoUrl = `${config.serverAddress}/api/assets/${user_id}/${file_name}`;
+
+        const { data } = file;
+
+        await fs.writeFile(file_path, data, (err, rs) => {
+          if (err) throw err;
+          return rs;
+        });
+      } else {
+        const uploadResult = await uploader(file.tempFilePath, user_id);
+        photoUrl = uploadResult.url;
+      }
     }
 
     const updatedUser = await User.findOneAndUpdate(
@@ -136,9 +159,14 @@ const updateUser = async (req, res) => {
 const setUpChatBot = async () => {
   const chatBot = await User.findOne({ isChatBot: true });
   if (!chatBot) {
-    // const photo = `${config.serverAddress}/api/assets/quickchat-bot-photo.jpeg`;
-    const photo =
-      "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688341854/assets/mytxrieabnapp4csyghj.avif";
+    let photo;
+    if (config.environment !== "production") {
+      photo = `${config.serverAddress}/api/assets/quickchat-bot-photo.png`;
+    } else {
+      photo =
+        "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688341854/assets/mytxrieabnapp4csyghj.avif";
+    }
+
     const uidv4 = uuidv4();
     const bs_token = `${uidv4}_${Date.now()}`;
 
