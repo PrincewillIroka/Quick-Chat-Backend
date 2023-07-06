@@ -81,8 +81,9 @@ const handleToken = async () => {
         messages: chatBotMessages,
       });
 
-      const chat_id = newChat._id;
 
+      // Add chatBot attachments/files for new user
+      const chat_id = newChat._id;
       const chatBotAttachments = [
         {
           attachment: {
