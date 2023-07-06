@@ -3,6 +3,7 @@ import cookie from "cookie";
 import { v4 as uuidv4 } from "uuid";
 import User from "../models/User";
 import Chat from "../models/Chat";
+import File from "../models/File";
 const ObjectIdType = mongoose.Types.ObjectId;
 
 const generateChatUrl = () => {
@@ -21,61 +22,130 @@ const getTokenFromCookie = (headers) => {
 };
 
 const handleToken = async () => {
-  // let bs_token = getTokenFromCookie(headers);
+  try {
+    // let bs_token = getTokenFromCookie(headers);
 
-  // valdateToken()
+    // valdateToken()
 
-  let bs_token;
+    let bs_token;
 
-  if (!bs_token) {
-    const uidv4 = uuidv4();
-    bs_token = `${uidv4}_${Date.now()}`;
+    if (!bs_token) {
+      const uidv4 = uuidv4();
+      bs_token = `${uidv4}_${Date.now()}`;
 
-    // Create new user here
-    const usersThatHaveNotUpdatedUsername = await User.countDocuments({
-      hasUpdatedUsername: false,
-    });
-    const userNameIndex = usersThatHaveNotUpdatedUsername + 1;
-    const user = await User.create({
-      bs_token,
-      name: `New User ${userNameIndex}`,
-    });
+      // Create new user here
+      const usersThatHaveNotUpdatedUsername = await User.countDocuments({
+        hasUpdatedUsername: false,
+      });
+      const userNameIndex = usersThatHaveNotUpdatedUsername + 1;
+      const user = await User.create({
+        bs_token,
+        name: `New User ${userNameIndex}`,
+      });
 
-    const chatBot = await User.findOne({ isChatBot: true });
+      const chatBot = await User.findOne({ isChatBot: true });
 
-    const creator_id = user._id;
-    const chatBot_id = chatBot._id;
-    const participants = [chatBot_id, creator_id];
-    const chat_url = generateChatUrl();
+      const creator_id = user._id;
+      const chatBotId = chatBot._id;
+      const participants = [chatBotId, creator_id];
+      const chat_url = generateChatUrl();
 
-    let chatBotMessages = [
-      "Hello, welcome to QuickChat app.",
-      "Click on Start new conversation to create a new chat.",
-      "Then copy the chat link, and send to anyone you want to chat with.",
-    ];
+      let chatBotMessages = [
+        "Hello, welcome to QuickChat app.",
+        "Click on Start new conversation to create a new chat.",
+        "Then copy the chat link, and send to anyone you want to chat with.",
+        "",
+      ];
+      let lastMsgId;
 
-    chatBotMessages = chatBotMessages.reduce((acc, cur) => {
-      const message_id = new ObjectIdType();
-      cur = {
-        content: cur,
-        sender: chatBot_id,
-        createdAt: new Date(),
-        _id: message_id,
-      };
-      acc = acc.concat([cur]);
-      return acc;
-    }, []);
+      chatBotMessages = chatBotMessages.reduce((acc, cur, curIndex) => {
+        const message_id = new ObjectIdType();
+        if (curIndex === 3) {
+          lastMsgId = message_id;
+        }
+        cur = {
+          content: cur,
+          sender: chatBotId,
+          createdAt: new Date(),
+          _id: message_id,
+        };
+        acc = acc.concat([cur]);
+        return acc;
+      }, []);
 
-    // Create default chat for new user & message from QuickChat bot
-    await Chat.create({
-      creator_id,
-      chat_url,
-      participants,
-      messages: chatBotMessages,
-    });
+      // Create default chat for new user & message from QuickChat bot
+      const newChat = await Chat.create({
+        creator_id,
+        chat_url,
+        participants,
+        messages: chatBotMessages,
+      });
+
+      const chat_id = newChat._id;
+
+      const chatBotAttachments = [
+        {
+          attachment: {
+            name: "CpBVc05.mp4",
+            file_url: "https://i.imgur.com/CpBVc05.mp4",
+            mimetype: "video/mp4",
+          },
+        },
+        {
+          attachment: {
+            name: "Screenshot_2023-07-06_at_17.22.44_mummw7.png",
+            file_url:
+              "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688660956/assets/Screenshot_2023-07-06_at_17.22.44_mummw7.png",
+            mimetype: "image/png",
+          },
+        },
+        {
+          attachment: {
+            name: "quick-chat_ntyhuo.pdf",
+            file_url: "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688662504/assets/quick-chat_ntyhuo.pdf",
+            mimetype: "application/pdf",
+          },
+        },
+      ].map((item, index) => {
+        item = {
+          ...item,
+          sender: creator_id,
+          chat_id: chat_id,
+          message_id: lastMsgId,
+          attachment: {
+            ...item.attachment,
+            key: index.toString(),
+            isUploading: "Completed",
+          },
+        };
+        return item;
+      });
+
+      const chatBotFiles = await File.insertMany(chatBotAttachments).then(
+        (docs) => {
+          if (Array.isArray(docs)) {
+            return docs.map((doc) => doc._id.toString());
+          }
+          return [];
+        }
+      );
+
+      await Chat.findOneAndUpdate(
+        {
+          _id: chat_id,
+          "messages._id": lastMsgId,
+        },
+        {
+          $set: { "messages.$.attachments": chatBotFiles },
+        },
+        { new: true }
+      );
+    }
+
+    return bs_token;
+  } catch (err) {
+    console.error(err);
   }
-
-  return bs_token;
 };
 
 const valdateToken = () => {
