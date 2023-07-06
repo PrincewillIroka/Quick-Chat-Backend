@@ -18,3 +18,13 @@ export const getChatsData = [
     .withMessage("Invalid Chat URL")
     .trim(),
 ];
+
+export const createChatData = [
+  body("creator_id").isString(),
+  body("passcode").optional().isString().withMessage("Invalid passcode").trim(),
+  body("chat_name")
+    .optional()
+    .isString()
+    .withMessage("Invalid Chat name")
+    .trim(),
+];
