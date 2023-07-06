@@ -23,7 +23,7 @@ const createChat = async (req, res) => {
     newChat = await newChat.populate([
       {
         path: "participants",
-        select: ["name", "photo"],
+        select: ["name", "photo", "isChatBot"],
       },
     ]);
     res.send({ newChat });

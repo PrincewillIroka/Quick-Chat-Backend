@@ -20,11 +20,11 @@ const getChats = async (req, res) => {
       .populate([
         {
           path: "participants",
-          select: ["name", "photo"],
+          select: ["name", "photo", "isChatBot"],
         },
         {
           path: "messages.sender",
-          select: ["name", "photo"],
+          select: ["name", "photo", "isChatBot"],
         },
         {
           path: "messages.attachments",
@@ -55,11 +55,11 @@ const getChats = async (req, res) => {
           .populate([
             {
               path: "participants",
-              select: ["name", "photo"],
+              select: ["name", "photo", "isChatBot"],
             },
             {
               path: "messages.sender",
-              select: ["name", "photo"],
+              select: ["name", "photo", "isChatBot"],
             },
             {
               path: "messages.attachments",

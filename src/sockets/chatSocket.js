@@ -3,7 +3,7 @@ import Chat from "../models/Chat";
 // import { getTokenFromCookie } from "../utils";
 const ObjectIdType = mongoose.Types.ObjectId;
 
-const chatSocket = (socket) => {
+const chatSocket = (io, socket) => {
   socket.on("join", (arg) => {
     // const bs_token = getTokenFromCookie(socket.handshake.headers);
     const { chat_url } = arg;
@@ -33,11 +33,11 @@ const chatSocket = (socket) => {
       .populate([
         {
           path: "participants",
-          select: ["name", "photo"],
+          select: ["name", "photo", "isChatBot"],
         },
         {
           path: "messages.sender",
-          select: ["name", "photo"],
+          select: ["name", "photo", "isChatBot"],
         },
         {
           path: "messages.attachments",
@@ -48,7 +48,6 @@ const chatSocket = (socket) => {
     newMessage.sender = { _id: sender_id };
     ack({ messageSent: true, chat_id, message_id, newMessage });
 
-    
     const chatMessages = updatedChat.messages;
     const newMessageForReceiver = chatMessages.find(
       (msg) => msg._id == message_id.toString()

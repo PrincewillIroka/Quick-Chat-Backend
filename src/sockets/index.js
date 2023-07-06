@@ -6,7 +6,7 @@ const sockets = (io) => {
     console.log("User connected successfully via socket!");
 
     //socket handlers
-    chatSocket(socket);
+    chatSocket(io, socket);
   });
 };
 
