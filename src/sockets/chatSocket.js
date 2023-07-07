@@ -8,6 +8,10 @@ const chatSocket = (io, socket) => {
     // const bs_token = getTokenFromCookie(socket.handshake.headers);
     const { chat_url } = arg;
     socket.join(chat_url);
+    // const str = io.fetchSockets().then((room) => {
+    //   console.log("clients in this room: ", room);
+    // });
+    // console.log({ str });
   });
 
   socket.on("newMessageSent", async (arg, ack) => {

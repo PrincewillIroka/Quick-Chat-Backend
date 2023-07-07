@@ -21,10 +21,22 @@ export const getChatsData = [
 
 export const createChatData = [
   body("creator_id").isString(),
-  body("passcode").optional().isString().withMessage("Invalid passcode").trim(),
+  body("passcode").optional().isString(),
   body("chat_name")
     .optional()
     .isString()
     .withMessage("Invalid Chat name")
     .trim(),
+];
+
+export const addBookmarkData = [
+  body("creator_id").isString(),
+  body("chat_id").isString(),
+];
+
+export const getBookmarksData = [body("creator_id").isString()];
+
+export const deleteBookmarkData = [
+  body("creator_id").isString(),
+  body("bookmark_id").isString(),
 ];

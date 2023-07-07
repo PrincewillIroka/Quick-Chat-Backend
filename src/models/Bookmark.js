@@ -4,8 +4,7 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 const BookmarkShema = new mongoose.Schema(
   {
     creator_id: ObjectId,
-    chat_url: String,
-    chat_name: String,
+    chat_id: { type: ObjectId, ref: "Chat" },
   },
   { usePushEach: true, timestamps: true }
 );
