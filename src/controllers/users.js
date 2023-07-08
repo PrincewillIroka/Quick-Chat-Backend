@@ -12,8 +12,11 @@ const getChats = async (req, res) => {
     const { bs_token = "", chatUrlParam = "" } = req.body;
     // const bs_token = getTokenFromCookie(req.headers);
 
+    // Get user
     const user = await User.findOne({ bs_token });
     const user_id = user?._id;
+
+    // Get user's chats
     let chats = await Chat.find({
       $or: [{ creator_id: user_id }, { participants: { $in: [user_id] } }],
     })
@@ -38,6 +41,7 @@ const getChats = async (req, res) => {
     const chatExists = await Chat.exists({ chat_url: chatUrlParam });
 
     if (chatExists) {
+      // Check if the user is already a participant in this chat
       const isChatFound = chats.find((chat) => chat.chat_url === chatUrlParam);
 
       if (!isChatFound) {
