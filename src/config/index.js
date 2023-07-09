@@ -11,6 +11,9 @@ const envVarsSchema = Joi.object({
   FRONTEND_APP_URL: Joi.string(),
   SERVER_ADDRESS: Joi.string(),
   REDIS_URL: Joi.string(),
+  ENCRYPTION_ALGORITHM: Joi.string(),
+  ENCRYPTION_INIT_VECTOR: Joi.string(),
+  ENCRYPTION_SECURITY_KEY: Joi.string(),
 })
   .unknown(true)
   .required();
@@ -37,4 +40,9 @@ export default {
   },
   serverAddress: process.env.SERVER_ADDRESS,
   redisUrl: process.env.REDIS_URL,
+  encryption: {
+    algorithm: process.env.ENCRYPTION_ALGORITHM,
+    initVector: process.env.ENCRYPTION_INIT_VECTOR,
+    securityKey: process.env.ENCRYPTION_SECURITY_KEY,
+  },
 };
