@@ -14,6 +14,7 @@ import router from "./routes";
 import db from "./db";
 import sockets from "./sockets";
 import { setUpChatBot } from "./controllers/users";
+import redis from "./redis";
 
 const app = express();
 
@@ -67,6 +68,7 @@ server.listen(port, async () => {
   sockets(io);
   //Set up ChatBot
   setUpChatBot();
+  redis.connect();
 });
 
 process.on("uncaughtException", function (err) {

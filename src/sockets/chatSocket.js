@@ -1,13 +1,14 @@
 import mongoose from "mongoose";
 import Chat from "../models/Chat";
 // import { getTokenFromCookie } from "../utils";
+import redis from "../redis";
 const ObjectIdType = mongoose.Types.ObjectId;
 
 const chatSocket = (io, socket) => {
   socket.on("join", (arg) => {
     // const bs_token = getTokenFromCookie(socket.handshake.headers);
-    const { chat_url } = arg;
-    socket.join(chat_url);
+    const { user_id } = arg;
+    socket.join(user_id);
     // const str = io.fetchSockets().then((room) => {
     //   console.log("clients in this room: ", room);
     // });
@@ -57,13 +58,23 @@ const chatSocket = (io, socket) => {
       (msg) => msg._id == message_id.toString()
     );
 
-    //To do 1: Broadcast this socket event to updatedChat.participants instead of broadcasting it to only
-    // those in the chat_url channel/group
-    socket.broadcast.to(chat_url).emit("newMessageReceived", {
-      chat_id,
-      message_id,
-      newMessage: newMessageForReceiver,
-    });
+    // Broadcast socket event to updatedChat.participants
+    const { participants = [] } = updatedChat;
+    for (let participant of participants) {
+      const { _id = "" } = participant;
+      const participantId = _id.toString();
+
+      socket.broadcast.to(participantId).emit("newMessageReceived", {
+        chat_id,
+        message_id,
+        newMessage: newMessageForReceiver,
+      });
+    }
+  });
+
+  socket.on("toggledSelectedChat", ({ user_id, chat_url }) => {
+    const redisClient = redis.getClient();
+    // redisClient.set();
   });
 };
 
