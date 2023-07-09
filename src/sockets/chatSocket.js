@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import Chat from "../models/Chat";
-// import { getTokenFromCookie } from "../utils";
+import { getTokenFromCookie, decryptData } from "../utils";
 import redis from "../redis";
+
 const ObjectIdType = mongoose.Types.ObjectId;
 
 const chatSocket = (io, socket) => {
@@ -16,59 +17,66 @@ const chatSocket = (io, socket) => {
   });
 
   socket.on("newMessageSent", async (arg, ack) => {
-    const { chat_url, chat_id, content, sender_id } = arg;
-    const message_id = new ObjectIdType();
+    try {
+      const { chat_url, chat_id, content, sender_id } = arg;
 
-    const newMessage = {
-      content,
-      sender: sender_id,
-      createdAt: new Date(),
-      _id: message_id,
-    };
+      const decryptedContent = decryptData(content);
 
-    const updatedChat = await Chat.findByIdAndUpdate(
-      chat_id,
-      {
-        $push: {
-          messages: newMessage,
-        },
-      },
-      { new: true }
-    )
-      .populate([
-        {
-          path: "participants",
-          select: ["name", "photo", "isChatBot"],
-        },
-        {
-          path: "messages.sender",
-          select: ["name", "photo", "isChatBot"],
-        },
-        {
-          path: "messages.attachments",
-        },
-      ])
-      .lean();
+      const message_id = new ObjectIdType();
 
-    newMessage.sender = { _id: sender_id };
-    ack({ messageSent: true, chat_id, message_id, newMessage });
+      const newMessage = {
+        content: decryptedContent,
+        sender: sender_id,
+        createdAt: new Date(),
+        _id: message_id,
+      };
 
-    const chatMessages = updatedChat.messages;
-    const newMessageForReceiver = chatMessages.find(
-      (msg) => msg._id == message_id.toString()
-    );
-
-    // Broadcast socket event to updatedChat.participants
-    const { participants = [] } = updatedChat;
-    for (let participant of participants) {
-      const { _id = "" } = participant;
-      const participantId = _id.toString();
-
-      socket.broadcast.to(participantId).emit("newMessageReceived", {
+      const updatedChat = await Chat.findByIdAndUpdate(
         chat_id,
-        message_id,
-        newMessage: newMessageForReceiver,
-      });
+        {
+          $push: {
+            messages: newMessage,
+          },
+        },
+        { new: true }
+      )
+        .populate([
+          {
+            path: "participants",
+            select: ["name", "photo", "isChatBot"],
+          },
+          {
+            path: "messages.sender",
+            select: ["name", "photo", "isChatBot"],
+          },
+          {
+            path: "messages.attachments",
+          },
+        ])
+        .lean();
+
+      newMessage.sender = { _id: sender_id };
+      ack({ messageSent: true, chat_id, message_id, newMessage });
+
+      const chatMessages = updatedChat.messages;
+      const newMessageForReceiver = chatMessages.find(
+        (msg) => msg._id == message_id.toString()
+      );
+
+      // Broadcast socket event to updatedChat.participants
+      const { participants = [] } = updatedChat;
+      for (let participant of participants) {
+        const { _id = "" } = participant;
+        const participantId = _id.toString();
+
+        socket.broadcast.to(participantId).emit("newMessageReceived", {
+          chat_id,
+          message_id,
+          newMessage: newMessageForReceiver,
+        });
+      }
+    } catch (err) {
+      console.error(err);
     }
   });
 

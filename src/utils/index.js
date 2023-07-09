@@ -1,9 +1,13 @@
 import mongoose from "mongoose";
 import cookie from "cookie";
 import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto";
+
 import User from "../models/User";
 import Chat from "../models/Chat";
 import File from "../models/File";
+import config from "../config";
+
 const ObjectIdType = mongoose.Types.ObjectId;
 
 const generateChatUrl = () => {
@@ -81,7 +85,6 @@ const handleToken = async () => {
         messages: chatBotMessages,
       });
 
-
       // Add chatBot attachments/files for new user
       const chat_id = newChat._id;
       const chatBotAttachments = [
@@ -103,7 +106,8 @@ const handleToken = async () => {
         {
           attachment: {
             name: "quick-chat_ntyhuo.pdf",
-            file_url: "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688662504/assets/quick-chat_ntyhuo.pdf",
+            file_url:
+              "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688662504/assets/quick-chat_ntyhuo.pdf",
             mimetype: "application/pdf",
           },
         },
@@ -153,4 +157,17 @@ const valdateToken = () => {
   //To do: Generate bs_token through jwt and validate token here
 };
 
-export { generateChatUrl, getTokenFromCookie, handleToken };
+const decryptData = (content) => {
+  const decipher = crypto.createDecipheriv(
+    config.encryption.algorithm,
+    config.encryption.securityKey,
+    config.encryption.initVector
+  );
+
+  let decryptedData = decipher.update(content, "hex", "utf-8");
+  decryptedData += decipher.final("utf8");
+
+  return decryptedData;
+};
+
+export { generateChatUrl, getTokenFromCookie, handleToken, decryptData };
