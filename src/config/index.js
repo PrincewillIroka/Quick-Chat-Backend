@@ -10,6 +10,7 @@ const envVarsSchema = Joi.object({
   DB_CONNECTION: Joi.string(),
   FRONTEND_APP_URL: Joi.string(),
   SERVER_ADDRESS: Joi.string(),
+  REDIS_URL: Joi.string(),
 })
   .unknown(true)
   .required();
@@ -35,4 +36,5 @@ export default {
     api_secret: envVars.CLOUDINARY_API_SECRET,
   },
   serverAddress: process.env.SERVER_ADDRESS,
+  redisUrl: process.env.REDIS_URL,
 };
