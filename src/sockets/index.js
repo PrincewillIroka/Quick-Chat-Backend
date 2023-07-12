@@ -1,5 +1,7 @@
 import chatSocket from "./chatSocket";
 
+global.users = {};
+
 const sockets = (io) => {
   
   io.on("connection", (socket) => {

@@ -6,17 +6,22 @@ import redis from "../redis";
 const ObjectIdType = mongoose.Types.ObjectId;
 
 const chatSocket = (io, socket) => {
-  socket.on("join", (arg) => {
+  socket.on("join", ({ user_id }) => {
     // const bs_token = getTokenFromCookie(socket.handshake.headers);
-    const { user_id } = arg;
     socket.join(user_id);
+    global.users[user_id] = user_id;
     // const str = io.fetchSockets().then((room) => {
     //   console.log("clients in this room: ", room);
     // });
     // console.log({ str });
   });
 
-  socket.on("newMessageSent", async (arg, ack) => {
+  socket.on("disconnect", ({ user_id }) => {
+    console.log("user " + global.users[user_id] + " disconnected");
+    delete global.users[user_id];
+  });
+
+  socket.on("new-message-sent", async (arg, ack) => {
     try {
       const { chat_url, chat_id, content, sender_id } = arg;
 
@@ -69,7 +74,7 @@ const chatSocket = (io, socket) => {
         const { _id = "" } = participant;
         const participantId = _id.toString();
 
-        socket.broadcast.to(participantId).emit("newMessageReceived", {
+        socket.broadcast.to(participantId).emit("new-message-received", {
           chat_id,
           message_id,
           newMessage: newMessageForReceiver,
@@ -80,7 +85,7 @@ const chatSocket = (io, socket) => {
     }
   });
 
-  socket.on("toggledSelectedChat", ({ user_id, chat_url }) => {
+  socket.on("toggled-selected-chat", ({ user_id, chat_url }) => {
     const redisClient = redis.getClient();
     // redisClient.set();
   });
