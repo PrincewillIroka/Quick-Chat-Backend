@@ -14,7 +14,7 @@ const getChats = async (req, res) => {
 
     // Get user
     const user = await User.findOne({ bs_token });
-    const user_id = user?._id;
+    const user_id = user?._id.toString();
 
     // Get user's chats
     let chats = await Chat.find({
@@ -38,7 +38,7 @@ const getChats = async (req, res) => {
       .exec()
       .then((chatsFound) => chatsFound);
 
-    const chatExists = await Chat.exists({ chat_url: chatUrlParam });
+    const chatExists = await Chat.findOne({ chat_url: chatUrlParam });
 
     if (chatExists) {
       // Check if the user is already a participant in this chat
@@ -72,6 +72,20 @@ const getChats = async (req, res) => {
           .exec()
           .then((chatFound) => chatFound);
         chats = [...chats, foundChat];
+      }
+
+      if (chatUrlParam) {
+        // Broadcast to other participants online that user has join this chat
+        const { _id: chat_id, participants = [] } = chatExists;
+        for (let participant of participants) {
+          participant = participant.toString();
+          if (participant !== user_id) {
+            req.io.to(participant).emit("participant-has-joined-chat", {
+              participant,
+              chat_id,
+            });
+          }
+        }
       }
     }
 

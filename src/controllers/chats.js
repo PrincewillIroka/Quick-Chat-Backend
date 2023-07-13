@@ -127,7 +127,7 @@ const uploadFile = async (req, res) => {
           { new: true }
         );
 
-        req.io.sockets.emit("uploadedFileSuccess", updatedFile);
+        req.io.sockets.emit("uploaded-file-success", updatedFile);
 
         // Todo: Switch file upload to use readable & writeable stream
         // const readableStream = fs.createReadStream().from(data);
