@@ -10,10 +10,6 @@ const chatSocket = (io, socket) => {
     // const bs_token = getTokenFromCookie(socket.handshake.headers);
     socket.join(user_id);
     global.users[user_id] = user_id;
-    // const str = io.fetchSockets().then((room) => {
-    //   console.log("clients in this room: ", room);
-    // });
-    // console.log({ str });
   });
 
   socket.on("disconnect", ({ user_id }) => {
