@@ -169,7 +169,11 @@ const updateUser = async (req, res) => {
 
     const updatedUser = await User.findOneAndUpdate(
       { _id: user_id },
-      { ...(name && { name }), ...(photoUrl && { photo: photoUrl }) },
+      {
+        ...(name && { name }),
+        ...(photoUrl && { photo: photoUrl }),
+        hasUpdatedUsername: true,
+      },
       { new: true }
     );
 
