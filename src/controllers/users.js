@@ -54,7 +54,8 @@ const getChats = async (req, res) => {
             $push: {
               participants: user_id,
             },
-          }
+          },
+          { new: true }
         )
           .populate([
             {
@@ -72,18 +73,23 @@ const getChats = async (req, res) => {
           .exec()
           .then((chatFound) => chatFound);
         chats = [...chats, foundChat];
-      }
 
-      if (chatUrlParam) {
-        // Broadcast to other participants online that user has join this chat
-        const { _id: chat_id, participants = [] } = chatExists;
-        for (let participant of participants) {
-          participant = participant.toString();
-          if (participant !== user_id) {
-            req.io.to(participant).emit("participant-has-joined-chat", {
-              participant,
-              chat_id,
-            });
+        if (chatUrlParam) {
+          // Broadcast to other participants that user has join this chat
+          const { _id: chat_id, participants = [] } = foundChat;
+          const participantFound = participants.find(
+            (participant) => participant._id.toString() === user_id
+          );
+          for (let participant of participants) {
+            const participantId = participant._id.toString();
+            if (participantId !== user_id) {
+              //To do: Send notification to participants that are online, informing them that a
+              //a new user has joined the chat.
+              req.io.to(participantId).emit("participant-has-joined-chat", {
+                participant: participantFound,
+                chat_id,
+              });
+            }
           }
         }
       }
