@@ -46,7 +46,6 @@ app.use(cookieParser());
 app.use(
   fileUpload({
     useTempFiles: config.environment !== "production" ? false : true,
-    tempFileDir : '/customTempDir/',
     limits: { fileSize: 5 * 1024 * 1024 },
   })
 );

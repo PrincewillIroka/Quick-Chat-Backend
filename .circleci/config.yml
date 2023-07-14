@@ -11,7 +11,7 @@ jobs:
       - node/install-packages:
           pkg-manager: npm
       - run:
-          command: npm run build
+          command: npm run ci-build
           name: Build app
       - persist_to_workspace:
           root: ~/project
