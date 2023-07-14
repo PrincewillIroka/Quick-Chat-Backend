@@ -85,9 +85,12 @@ const chatSocket = (io, socket) => {
     }
   });
 
-  socket.on("toggled-selected-chat", ({ user_id, chat_url }) => {
-    const redisClient = redis.getClient();
-    // redisClient.set();
+  socket.on("participant-join-selected-chat", ({ user_id, chat_url }) => {
+    socket.join(chat_url);
+  });
+
+  socket.on("participant-is-typing", ({chat_url, message }) => {
+    socket.broadcast.to(chat_url).emit("update-participant-typing", message);
   });
 };
 
