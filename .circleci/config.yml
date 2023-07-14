@@ -1,0 +1,19 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.0.2
+
+jobs:
+  build:
+    executor: node/default # use the default executor defined within the orb
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          command: npm run ci-build
+          name: Build app
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .

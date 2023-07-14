@@ -3,6 +3,7 @@
     "lint": "eslint .",
     "start": "export $(xargs < .env) && node dist/index.js",
     "build": "rm -rf dist tmp && mkdir dist && npm i -g @babel/cli @babel/core && babel src -s -d dist",
+    "ci-build": "rm -rf dist tmp && mkdir dist && npm i @babel/cli @babel/core && babel src -s -d dist",
     "dev": "rm -rf tmp && env-cmd -f .env.local --fallback nodemon --ignore static/ --exec babel-node src/index.js"
   },
   "dependencies": {
