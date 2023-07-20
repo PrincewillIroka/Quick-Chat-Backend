@@ -83,7 +83,7 @@ const getChats = async (req, res) => {
           for (let participant of participants) {
             const participantId = participant._id.toString();
             if (participantId !== user_id) {
-              //To do: Send notification to participants that are online, informing them that a
+              //To do: Send notification to participants, informing them that a
               //a new user has joined the chat.
               req.io.to(participantId).emit("participant-has-joined-chat", {
                 participant: participantFound,
@@ -169,7 +169,10 @@ const updateUser = async (req, res) => {
 
     const updatedUser = await User.findOneAndUpdate(
       { _id: user_id },
-      { ...(name && { name }), ...(photoUrl && { photo: photoUrl }) },
+      {
+        ...(name && { name, hasUpdatedUsername: true }),
+        ...(photoUrl && { photo: photoUrl }),
+      },
       { new: true }
     );
 

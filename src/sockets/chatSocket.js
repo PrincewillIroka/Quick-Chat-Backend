@@ -10,10 +10,6 @@ const chatSocket = (io, socket) => {
     // const bs_token = getTokenFromCookie(socket.handshake.headers);
     socket.join(user_id);
     global.users[user_id] = user_id;
-    // const str = io.fetchSockets().then((room) => {
-    //   console.log("clients in this room: ", room);
-    // });
-    // console.log({ str });
   });
 
   socket.on("disconnect", ({ user_id }) => {
@@ -79,6 +75,9 @@ const chatSocket = (io, socket) => {
           message_id,
           newMessage: newMessageForReceiver,
         });
+
+        //To do: Send notification to participants that are offline/not actively in that selected chat, informing them that a
+        //a new user has joined the chat.
       }
     } catch (err) {
       console.error(err);
@@ -89,7 +88,7 @@ const chatSocket = (io, socket) => {
     socket.join(chat_url);
   });
 
-  socket.on("participant-is-typing", ({chat_url, message }) => {
+  socket.on("participant-is-typing", ({ chat_url, message }) => {
     socket.broadcast.to(chat_url).emit("update-participant-typing", message);
   });
 };
