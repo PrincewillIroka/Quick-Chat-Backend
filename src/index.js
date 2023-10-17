@@ -15,6 +15,7 @@ import db from "./db";
 import sockets from "./sockets";
 import { setUpChatBot } from "./controllers/users";
 import redis from "./redis";
+import rateLimitMiddleware from "./middlewares/rateLimit";
 
 const app = express();
 
@@ -54,6 +55,8 @@ app.use(function (req, res, next) {
   req.io = io;
   next();
 });
+
+app.use(rateLimitMiddleware);
 
 app.use("/api", router);
 app.use("/api/assets", express.static(path.join(__dirname, "../assets")));
