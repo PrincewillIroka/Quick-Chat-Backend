@@ -6,6 +6,7 @@ import User from "../models/User";
 import { handleToken } from "../utils";
 import config from "../config";
 import { uploader } from "../services";
+import redis from "../redis";
 
 const getChats = async (req, res) => {
   try {
@@ -82,6 +83,7 @@ const getChats = async (req, res) => {
           );
           for (let participant of participants) {
             const participantId = participant._id.toString();
+
             if (participantId !== user_id) {
               //To do: Send notification to participants, informing them that a
               //a new user has joined the chat.
@@ -95,7 +97,11 @@ const getChats = async (req, res) => {
       }
     }
 
-    res.send({ chats });
+    // await redis.getClient().del(`notification-${user_id}`);
+    let notifications = await redis.getClient().get(`notification-${user_id}`);
+    notifications = JSON.parse(notifications) || [];
+
+    res.send({ success: true, chats, notifications });
   } catch (error) {
     console.error(error);
     res.status(500);

@@ -1,6 +1,7 @@
 import chatSocket from "./chatSocket";
 
 global.users = {};
+global.selectedChat = {};
 
 const sockets = (io) => {
   
