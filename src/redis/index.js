@@ -12,7 +12,7 @@ const connect = async () => {
   await client.connect();
 };
 
-const getClient = function () {
+const getClient = () => {
   return client;
 };
 
