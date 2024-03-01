@@ -107,6 +107,7 @@ const chatSocket = (io, socket) => {
                 message_id,
                 value,
                 chat_id,
+                chat_url
               },
             ]);
 
