@@ -97,7 +97,7 @@ const getChats = async (req, res) => {
       }
     }
 
-    await redis.getClient().del(`notification-${user_id}`);
+    // await redis.getClient().del(`notification-${user_id}`);
     let notifications = await redis.getClient().get(`notification-${user_id}`);
     notifications = JSON.parse(notifications) || [];
 
