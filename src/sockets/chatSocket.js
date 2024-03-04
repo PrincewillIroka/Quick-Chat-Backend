@@ -77,19 +77,11 @@ const chatSocket = (io, socket) => {
         (participant) => participant._id.toString() === sender_id
       );
 
-      console.debug("participants-for-new-message", participants);
-
       for (let participant of participants) {
         const { _id = "" } = participant;
         const participantId = _id.toString();
 
         if (participantId !== sender_id) {
-          console.debug(
-            "new-message-for-participant",
-            participantId,
-            sender_id
-          );
-
           socket.broadcast.to(participantId).emit("new-message-received", {
             chat_id,
             message_id,
@@ -111,6 +103,7 @@ const chatSocket = (io, socket) => {
               let notifications = await redis
                 .getClient()
                 .get(`notification-${participantId}`);
+
               notifications = JSON.parse(notifications) || [];
               notifications = notifications.concat(notifications, [
                 {
