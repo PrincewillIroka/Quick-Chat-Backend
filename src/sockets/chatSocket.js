@@ -90,7 +90,7 @@ const chatSocket = (io, socket) => {
             sender_id
           );
 
-          io.to(participantId).emit("new-message-received", {
+          socket.broadcast.to(participantId).emit("new-message-received", {
             chat_id,
             message_id,
             newMessage: newMessageForReceiver,
@@ -134,10 +134,12 @@ const chatSocket = (io, socket) => {
             // If this chat isn't the user's current selected chat,
             // Emit an event to the user, informing them that a new message was sent to the chat.
 
-            io.to(participantId).emit("new-message-notification", {
-              chat_id,
-              value,
-            });
+            socket.broadcast
+              .to(participantId)
+              .emit("new-message-notification", {
+                chat_id,
+                value,
+              });
           }
         }
       }
