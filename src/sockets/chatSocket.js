@@ -11,14 +11,15 @@ const chatSocket = (io, socket) => {
     socket.join(user_id);
     global.users[socket.id] = user_id;
 
-    // const str = io.fetchSockets().then((room) => {
-    //   console.log("clients in this room: ", room);
-    // });
+    console.debug("User joined successfully!", {
+      socketId: socket.id,
+      user_id,
+    });
   });
 
   socket.on("disconnect", () => {
     const user_id = global.users[socket.id];
-    console.log("user " + user_id + " disconnected");
+    console.debug("User disconnected!", { socketId: socket.id, user_id });
     delete global.users[socket.id];
     delete global.selectedChat[user_id];
   });
@@ -76,11 +77,19 @@ const chatSocket = (io, socket) => {
         (participant) => participant._id.toString() === sender_id
       );
 
+      console.debug("participants-for-new-message", participants);
+
       for (let participant of participants) {
         const { _id = "" } = participant;
         const participantId = _id.toString();
 
-        socket.broadcast.to(participantId).emit("new-message-received", {
+        console.debug(
+          "new-message-for-participant",
+          participantId,
+          newMessageForReceiver
+        );
+
+        io.to(participantId).emit("new-message-received", {
           chat_id,
           message_id,
           newMessage: newMessageForReceiver,
@@ -107,7 +116,7 @@ const chatSocket = (io, socket) => {
                 message_id,
                 value,
                 chat_id,
-                chat_url
+                chat_url,
               },
             ]);
 
@@ -123,12 +132,10 @@ const chatSocket = (io, socket) => {
             // If this chat isn't the user's current selected chat,
             // Emit an event to the user, informing them that a new message was sent to the chat.
 
-            socket.broadcast
-              .to(participantId)
-              .emit("new-message-notification", {
-                chat_id,
-                value,
-              });
+            io.to(participantId).emit("new-message-notification", {
+              chat_id,
+              value,
+            });
           }
         }
       }
