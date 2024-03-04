@@ -83,20 +83,20 @@ const chatSocket = (io, socket) => {
         const { _id = "" } = participant;
         const participantId = _id.toString();
 
-        console.debug(
-          "new-message-for-participant",
-          participantId,
-          newMessageForReceiver
-        );
-
-        io.to(participantId).emit("new-message-received", {
-          chat_id,
-          message_id,
-          newMessage: newMessageForReceiver,
-          participantId,
-        });
-
         if (participantId !== sender_id) {
+          console.debug(
+            "new-message-for-participant",
+            participantId,
+            sender_id
+          );
+
+          io.to(participantId).emit("new-message-received", {
+            chat_id,
+            message_id,
+            newMessage: newMessageForReceiver,
+            participantId,
+          });
+
           const userSelectedChat = global.selectedChat[participantId];
           const isCurrentSelectedChat = userSelectedChat === chat_url;
 
@@ -107,25 +107,27 @@ const chatSocket = (io, socket) => {
             // If user is not online(doesn't have a selected chat),
             // Save notification to redis.
 
-            let notifications = await redis
-              .getClient()
-              .get(`notification-${participantId}`);
-            notifications = JSON.parse(notifications) || [];
-            notifications = notifications.concat(notifications, [
-              {
-                message_id,
-                value,
-                chat_id,
-                chat_url,
-              },
-            ]);
+            Promise.resolve(async () => {
+              let notifications = await redis
+                .getClient()
+                .get(`notification-${participantId}`);
+              notifications = JSON.parse(notifications) || [];
+              notifications = notifications.concat(notifications, [
+                {
+                  message_id,
+                  value,
+                  chat_id,
+                  chat_url,
+                },
+              ]);
 
-            await redis
-              .getClient()
-              .set(
-                `notification-${participantId}`,
-                JSON.stringify(notifications)
-              );
+              await redis
+                .getClient()
+                .set(
+                  `notification-${participantId}`,
+                  JSON.stringify(notifications)
+                );
+            });
           }
 
           if (userSelectedChat && !isCurrentSelectedChat) {
