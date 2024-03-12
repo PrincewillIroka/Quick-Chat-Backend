@@ -169,7 +169,7 @@ const updateUser = async (req, res) => {
         });
       } else {
         const uploadResult = await uploader(file.tempFilePath, user_id);
-        photoUrl = uploadResult.url;
+        photoUrl = uploadResult.secure_url;
       }
     }
 
