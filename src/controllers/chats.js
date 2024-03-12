@@ -56,91 +56,99 @@ const uploadFile = async (req, res) => {
       }
 
       async function handleFileUpload(key, value) {
-        const { data, ...rest } = value;
-        const { name, mimetype, size } = rest;
+        try {
+          const { data, ...rest } = value;
+          const { name, mimetype, size } = rest;
 
-        //Create new File in db
-        const newFile = await File.create({
-          sender: sender_id,
-          chat_id,
-          message_id,
-          attachment: {
-            name,
-            mimetype,
-            size,
-            key,
-            isUploading: "In Progress",
-          },
-        });
+          //Create new File in db
+          const newFile = await File.create({
+            sender: sender_id,
+            chat_id,
+            message_id,
+            attachment: {
+              name,
+              mimetype,
+              size,
+              key,
+              isUploading: "In Progress",
+            },
+          });
 
-        // Todo: If file exists, append a number to filename to avoid duplicates
+          // Todo: If file exists, append a number to filename to avoid duplicates
 
-        let fileUploadResult, file_url;
+          let fileUploadResult, file_url;
 
-        if (config.environment !== "production") {
-          // Local file upload
-          const folder_path = `static/chat_images/${chat_id}`;
+          if (config.environment !== "production") {
+            // Local file upload
+            const folder_path = `static/chat_images/${chat_id}`;
 
-          const staticFolder = path.join(process.cwd(), folder_path);
-          if (!fs.existsSync(staticFolder)) {
-            fs.mkdirSync(staticFolder, { recursive: true });
+            const staticFolder = path.join(process.cwd(), folder_path);
+            if (!fs.existsSync(staticFolder)) {
+              fs.mkdirSync(staticFolder, { recursive: true });
+            }
+
+            const file_path = `${folder_path}/${name}`;
+            file_url = `${config.serverAddress}/api/static/${chat_id}/${name}`;
+
+            fileUploadResult = await fs.writeFile(
+              file_path,
+              data,
+              (err, rs) => {
+                if (err) throw err;
+                return rs;
+              }
+            );
+          } else {
+            fileUploadResult = await uploader(value.tempFilePath, chat_id).then(
+              async (result) => result
+            );
+            file_url = fileUploadResult.secure_url;
           }
 
-          const file_path = `${folder_path}/${name}`;
-          file_url = `${config.serverAddress}/api/static/${chat_id}/${name}`;
+          const newFileId = newFile._id;
 
-          fileUploadResult = await fs.writeFile(file_path, data, (err, rs) => {
-            if (err) throw err;
-            return rs;
-          });
-        } else {
-          fileUploadResult = await uploader(value.tempFilePath, chat_id).then(
-            async (result) => result
-          );
-          file_url = fileUploadResult.url;
-        }
-
-        const newFileId = newFile._id;
-
-        const updatedFile = await File.findOneAndUpdate(
-          { _id: newFileId },
-          {
-            $set: {
-              "attachment.isUploading": "Completed",
-              "attachment.file_url": file_url,
+          const updatedFile = await File.findOneAndUpdate(
+            { _id: newFileId },
+            {
+              $set: {
+                "attachment.isUploading": "Completed",
+                "attachment.file_url": file_url,
+              },
             },
-          },
-          { new: true }
-        );
+            { new: true }
+          );
 
-        //Adds newFileId to attachments array in messages
-        await Chat.findOneAndUpdate(
-          {
-            _id: chat_id,
-            $or: [
-              { creator_id: sender_id },
-              { participants: { $in: [sender_id] } },
-            ],
-            "messages._id": message_id,
-          },
-          { $push: { "messages.$.attachments": newFileId } },
-          { new: true }
-        );
+          //Adds newFileId to attachments array in messages
+          await Chat.findOneAndUpdate(
+            {
+              _id: chat_id,
+              $or: [
+                { creator_id: sender_id },
+                { participants: { $in: [sender_id] } },
+              ],
+              "messages._id": message_id,
+            },
+            { $push: { "messages.$.attachments": newFileId } },
+            { new: true }
+          );
 
-        req.io.sockets.emit("uploaded-file-success", updatedFile);
+          req.io.sockets.emit("uploaded-file-success", updatedFile);
 
-        // Todo: Switch file upload to use readable & writeable stream
-        // const readableStream = fs.createReadStream().from(data);
-        // const writeableStream = fs.createWriteStream(url);
+          // Todo: Switch file upload to use readable & writeable stream
+          // const readableStream = fs.createReadStream().from(data);
+          // const writeableStream = fs.createWriteStream(url);
 
-        // let writtenData = 0;
+          // let writtenData = 0;
 
-        // readableStream.on("data", (data) => {
-        //   writeableStream.write(data, () => {
-        //     writtenData += data.length;
-        //     console.log("Has read", writtenData);
-        //   });
-        // });
+          // readableStream.on("data", (data) => {
+          //   writeableStream.write(data, () => {
+          //     writtenData += data.length;
+          //     console.log("Has read", writtenData);
+          //   });
+          // });
+        } catch (error) {
+          console.error(error);
+        }
       }
     })();
 
