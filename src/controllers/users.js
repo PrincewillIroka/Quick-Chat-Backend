@@ -194,27 +194,52 @@ const updateUser = async (req, res) => {
 };
 
 const setUpChatBot = async () => {
-  const chatBot = await User.findOne({ isChatBot: true });
-  if (!chatBot) {
-    let photo;
-    if (config.environment !== "production") {
-      photo = `${config.serverAddress}/api/assets/quickchat-bot-photo.png`;
-    } else {
-      photo =
-        "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688341854/assets/mytxrieabnapp4csyghj.avif";
+  try {
+    const chatBot = await User.findOne({ isChatBot: true });
+    if (!chatBot) {
+      let photo;
+      if (config.environment !== "production") {
+        photo = `${config.serverAddress}/api/assets/quickchat-bot-photo.png`;
+      } else {
+        photo =
+          "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688341854/assets/mytxrieabnapp4csyghj.avif";
+      }
+
+      const uidv4 = uuidv4();
+      const bs_token = `${uidv4}_${Date.now()}`;
+
+      await User.create({
+        name: "QuickChat Bot",
+        photo,
+        bs_token,
+        isChatBot: true,
+        hasUpdatedUsername: true,
+      });
     }
-
-    const uidv4 = uuidv4();
-    const bs_token = `${uidv4}_${Date.now()}`;
-
-    await User.create({
-      name: "QuickChat Bot",
-      photo,
-      bs_token,
-      isChatBot: true,
-      hasUpdatedUsername: true,
-    });
+  } catch (error) {
+    console.error(error);
+    res.status(500);
   }
 };
 
-export { getChats, authenticateUser, updateUser, setUpChatBot };
+const updateDarkMode = async (req, res) => {
+  try {
+    const { user_id, isDarkMode } = req.body;
+
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: user_id },
+      {
+        isDarkMode,
+      },
+      { new: true }
+    );
+    const updatedDarkMode = updatedUser.isDarkMode;
+
+    res.send({ success: true, updatedDarkMode });
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+  }
+};
+
+export { getChats, authenticateUser, updateUser, setUpChatBot, updateDarkMode };

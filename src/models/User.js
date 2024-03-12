@@ -7,6 +7,7 @@ const UserShema = new mongoose.Schema(
     bs_token: String,
     hasUpdatedUsername: { type: Boolean, default: false },
     isChatBot: { type: Boolean, default: false },
+    isDarkMode: { type: Boolean, default: false },
   },
   { usePushEach: true, timestamps: true }
 );
