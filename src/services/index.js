@@ -7,11 +7,15 @@ cloudinary.config({
   api_secret: config.upload.api_secret,
 });
 
-async function uploader(file, folder_id) {
+async function uploader(file, folder_id, public_id) {
   return new Promise((resolve, reject) => {
     cloudinary.v2.uploader.upload(
       file,
-      { folder: folder_id, resource_type: "auto", public_id: folder_id },
+      {
+        folder: folder_id,
+        resource_type: "auto",
+        ...(public_id && { public_id }),
+      },
       function (error, result) {
         if (error) {
           reject(error);
