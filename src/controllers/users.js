@@ -168,7 +168,11 @@ const updateUser = async (req, res) => {
           return rs;
         });
       } else {
-        const uploadResult = await uploader(file.tempFilePath, user_id);
+        const uploadResult = await uploader(
+          file.tempFilePath,
+          user_id,
+          user_id //Pass user_id as public_id to prevent uploading profile photo duplicates
+        );
         photoUrl = uploadResult.secure_url;
       }
     }
