@@ -43,17 +43,21 @@ const getChats = async (req, res) => {
 
     if (chatExists) {
       // Check if the user is already a participant in this chat
-      const isChatFound = chats.find((chat) => chat.chat_url === chatUrlParam);
+      const chatFound = chats.find((chat) => chat.chat_url === chatUrlParam);
 
-      if (!isChatFound) {
+      if (!chatFound) {
         //Add user as chat participant
-        const foundChat = await Chat.findOneAndUpdate(
+        const chat = await Chat.findOneAndUpdate(
           {
             chat_url: chatUrlParam,
           },
           {
             $push: {
-              participants: user_id,
+              $cond: [
+                { $gt: ["passcode", ""] }, //Only add participant, if this chat
+                { participants: user_id }, //doesn't have a passcode
+                "$$REMOVE",
+              ],
             },
           },
           { new: true }
@@ -73,11 +77,11 @@ const getChats = async (req, res) => {
           ])
           .exec()
           .then((chatFound) => chatFound);
-        chats = [...chats, foundChat];
+        chats = [...chats, chat];
 
         if (chatUrlParam) {
           // Broadcast to other participants that user has join this chat
-          const { _id: chat_id, participants = [] } = foundChat;
+          const { _id: chat_id, participants = [] } = chat;
           const participantFound = participants.find(
             (participant) => participant._id.toString() === user_id
           );

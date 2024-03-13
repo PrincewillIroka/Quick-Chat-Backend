@@ -157,6 +157,19 @@ const valdateToken = () => {
   //To do: Generate bs_token through jwt and validate token here
 };
 
+const encryptData = (content) => {
+  const cipher = crypto.createCipheriv(
+    config.encryption.algorithm,
+    config.encryption.securityKey,
+    config.encryption.initVector
+  );
+
+  let encryptedData = cipher.update(content, "utf8", "hex");
+  encryptedData += cipher.final("hex");
+
+  return encryptedData;
+};
+
 const decryptData = (content) => {
   const decipher = crypto.createDecipheriv(
     config.encryption.algorithm,
@@ -170,4 +183,10 @@ const decryptData = (content) => {
   return decryptedData;
 };
 
-export { generateChatUrl, getTokenFromCookie, handleToken, decryptData };
+export {
+  generateChatUrl,
+  getTokenFromCookie,
+  handleToken,
+  encryptData,
+  decryptData,
+};

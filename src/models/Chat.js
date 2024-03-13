@@ -19,6 +19,7 @@ const ChatShema = new mongoose.Schema(
     ],
     chat_name: String,
     passcode: String,
+    access_rights: [{ type: ObjectId, ref: "User" }],
   },
   { usePushEach: true, timestamps: true }
 );
