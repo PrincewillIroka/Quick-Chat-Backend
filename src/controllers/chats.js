@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { generateChatUrl } from "../utils";
+import { generateChatUrl, encryptData, decryptData } from "../utils";
 import Chat from "../models/Chat";
 import File from "../models/File";
 import { uploader } from "../services";
@@ -13,10 +13,16 @@ const createChat = async (req, res) => {
 
     const participants = [creator_id];
 
+    let encryptedPasscode;
+
+    if (passcode) {
+      encryptedPasscode = encryptData(passcode);
+    }
+
     let newChat = await Chat.create({
       creator_id,
       chat_url,
-      passcode,
+      ...(encryptedPasscode && { passcode: encryptedPasscode }),
       participants,
       chat_name,
     });
@@ -26,7 +32,7 @@ const createChat = async (req, res) => {
         select: ["name", "photo", "isChatBot"],
       },
     ]);
-    res.send({ newChat });
+    res.send({ success: true, newChat });
   } catch (error) {
     console.error(error);
     res.status(500);
@@ -159,4 +165,59 @@ const uploadFile = async (req, res) => {
   }
 };
 
-export { createChat, uploadFile };
+const updateAccessRight = async (req, res) => {
+  try {
+    const { chat_id, user_id, passcode } = req.body;
+    let success, updatedChat;
+
+    const chat = await Chat.findById(chat_id).lean();
+
+    if (chat) {
+      const decryptedPasscode = decryptData(chat.passcode);
+
+      if (decryptedPasscode === passcode) {
+        updatedChat = await Chat.findByIdAndUpdate(
+          { _id: chat_id },
+          {
+            $push: {
+              access_rights: user_id,
+              participants: user_id,
+            },
+          },
+          { new: true }
+        )
+          .populate([
+            {
+              path: "participants",
+              select: ["name", "photo", "isChatBot"],
+            },
+            {
+              path: "messages.sender",
+              select: ["name", "photo", "isChatBot"],
+            },
+            {
+              path: "messages.attachments",
+            },
+          ])
+          .lean();
+
+        success = true;
+
+        //To do: Emit event to other users that a new participant has joined the chat.
+      } else {
+        success = false;
+      }
+    } else {
+      success = false;
+    }
+
+    console.log({ updatedChat });
+
+    res.send({ success, ...(updatedChat && { updatedChat }) });
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+  }
+};
+
+export { createChat, uploadFile, updateAccessRight };
