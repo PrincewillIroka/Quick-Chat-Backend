@@ -77,7 +77,7 @@ const getChats = async (req, res) => {
           ])
           .exec()
           .then((chatFound) => chatFound);
-        chats = [...chats, chat];
+        chats = [chat].concat(chats);
 
         if (chatUrlParam) {
           // Broadcast to other participants that user has join this chat
