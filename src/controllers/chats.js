@@ -41,7 +41,7 @@ const createChat = async (req, res) => {
 
 const uploadFile = async (req, res) => {
   try {
-    const { chat_id, sender_id, message_id } = req.body;
+    const { chat_id, chat_url, sender_id, message_id } = req.body;
     const files = req.files || [];
 
     const totalFileSize = Object.values(files).reduce(
@@ -138,7 +138,7 @@ const uploadFile = async (req, res) => {
             { new: true }
           );
 
-          req.io.sockets.emit("uploaded-file-success", updatedFile);
+          req.io.to(chat_url).emit("uploaded-file-success", updatedFile);
 
           // Todo: Switch file upload to use readable & writeable stream
           // const readableStream = fs.createReadStream().from(data);
@@ -210,8 +210,6 @@ const updateAccessRight = async (req, res) => {
     } else {
       success = false;
     }
-
-    console.log({ updatedChat });
 
     res.send({ success, ...(updatedChat && { updatedChat }) });
   } catch (error) {
