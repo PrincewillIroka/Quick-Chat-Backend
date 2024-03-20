@@ -39,67 +39,64 @@ const getChats = async (req, res) => {
         },
       ])
       .sort([["updatedAt", -1]])
-      .lean()
-      .exec()
-      .then((chatsFound) => chatsFound);
+      .lean();
 
-    const chatExists = await Chat.findOne({ chat_url: chatUrlParam });
+    const chatFound = chats.find((chat) => chat.chat_url === chatUrlParam);
 
-    if (chatExists) {
-      // If the user is not already a participant in this chat.
-      const chatFound = chats.find((chat) => chat.chat_url === chatUrlParam);
+    if (chatFound) {
+      const { passcode = "", participants = [] } = chatFound || {};
+      const isParticipant = participants.find(
+        (participant) => participant?._id.toString() === user_id
+      );
 
-      if (!chatFound) {
+      //If user isn't a participant && if this chat doesn't have a passcode.
+      if (!isParticipant && !passcode) {
         //Add user as chat participant.
-        //Only add participant, if this chat doesn't have a passcode.
-
-        if (!chatExists.passcode) {
-          const chat = await Chat.findOneAndUpdate(
+        const chat = await Chat.findOneAndUpdate(
+          {
+            chat_url: chatUrlParam,
+          },
+          {
+            $push: {
+              participants: user_id,
+            },
+          },
+          { new: true }
+        )
+          .populate([
             {
-              chat_url: chatUrlParam,
+              path: "participants",
+              select: ["name", "photo", "isChatBot"],
             },
             {
-              $push: {
-                participants: user_id,
-              },
+              path: "messages.sender",
+              select: ["name", "photo", "isChatBot"],
             },
-            { new: true }
-          )
-            .populate([
-              {
-                path: "participants",
-                select: ["name", "photo", "isChatBot"],
-              },
-              {
-                path: "messages.sender",
-                select: ["name", "photo", "isChatBot"],
-              },
-              {
-                path: "messages.attachments",
-              },
-            ])
-            .exec()
-            .then((chatFound) => chatFound);
+            {
+              path: "messages.attachments",
+            },
+          ])
+          .exec()
+          .then((chatFound) => chatFound);
 
-          chats = [chat].concat(chats);
+        chats = [chat].concat(chats);
 
-          // Broadcast to other participants that user has join this chat
-          const { _id: chat_id, participants = [] } = chat;
-          const participantFound = participants.find(
-            (participant) => participant._id.toString() === user_id
-          );
+        // Broadcast to other participants that user has join this chat
+        const { _id: chat_id, participants = [] } = chat;
+        const participantFound = participants.find(
+          (participant) => participant._id.toString() === user_id
+        );
 
-          for (let participant of participants) {
-            const participantId = participant._id.toString();
+        for (let participant of participants) {
+          const participantId = participant._id.toString();
 
-            if (participantId !== user_id) {
-              //To do: Send notification to participants, informing them that a
-              //a new user has joined the chat.
-              req.io.to(participantId).emit("participant-has-joined-chat", {
-                participant: participantFound,
-                chat_id,
-              });
-            }
+          if (participantId !== user_id) {
+            //To do: Send notification to participants, informing them that a
+            //a new user has joined the chat.
+            req.io.to(participantId).emit("participant-has-joined-chat", {
+              participant: participantFound,
+              chat_id,
+            });
           }
         }
       }
