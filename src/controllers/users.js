@@ -76,6 +76,7 @@ const getChats = async (req, res) => {
               path: "messages.attachments",
             },
           ])
+          .sort([["updatedAt", -1]])
           .lean();
 
         chats = chats.map((ch) => (ch.chat_url === chatUrlParam ? chat : ch));
