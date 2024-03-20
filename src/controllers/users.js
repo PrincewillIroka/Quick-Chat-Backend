@@ -17,9 +17,13 @@ const getChats = async (req, res) => {
     const user = await User.findOne({ bs_token });
     const user_id = user?._id.toString();
 
-    // Get user's chats
+    // Get user's chats & current chat with this chatUrlParam too
     let chats = await Chat.find({
-      $or: [{ creator_id: user_id }, { participants: { $in: [user_id] } }],
+      $or: [
+        { creator_id: user_id },
+        { participants: { $in: [user_id] } },
+        { chat_url: chatUrlParam },
+      ],
     })
       .populate([
         {
@@ -42,49 +46,49 @@ const getChats = async (req, res) => {
     const chatExists = await Chat.findOne({ chat_url: chatUrlParam });
 
     if (chatExists) {
-      // Check if the user is already a participant in this chat
+      // If the user is not already a participant in this chat.
       const chatFound = chats.find((chat) => chat.chat_url === chatUrlParam);
 
       if (!chatFound) {
-        //Add user as chat participant
-        const chat = await Chat.findOneAndUpdate(
-          {
-            chat_url: chatUrlParam,
-          },
-          {
-            $push: {
-              $cond: [
-                { $gt: ["passcode", ""] }, //Only add participant, if this chat
-                { participants: user_id }, //doesn't have a passcode
-                "$$REMOVE",
-              ],
-            },
-          },
-          { new: true }
-        )
-          .populate([
-            {
-              path: "participants",
-              select: ["name", "photo", "isChatBot"],
-            },
-            {
-              path: "messages.sender",
-              select: ["name", "photo", "isChatBot"],
-            },
-            {
-              path: "messages.attachments",
-            },
-          ])
-          .exec()
-          .then((chatFound) => chatFound);
-        chats = [chat].concat(chats);
+        //Add user as chat participant.
+        //Only add participant, if this chat doesn't have a passcode.
 
-        if (chatUrlParam) {
+        if (!chatExists.passcode) {
+          const chat = await Chat.findOneAndUpdate(
+            {
+              chat_url: chatUrlParam,
+            },
+            {
+              $push: {
+                participants: user_id,
+              },
+            },
+            { new: true }
+          )
+            .populate([
+              {
+                path: "participants",
+                select: ["name", "photo", "isChatBot"],
+              },
+              {
+                path: "messages.sender",
+                select: ["name", "photo", "isChatBot"],
+              },
+              {
+                path: "messages.attachments",
+              },
+            ])
+            .exec()
+            .then((chatFound) => chatFound);
+
+          chats = [chat].concat(chats);
+
           // Broadcast to other participants that user has join this chat
           const { _id: chat_id, participants = [] } = chat;
           const participantFound = participants.find(
             (participant) => participant._id.toString() === user_id
           );
+
           for (let participant of participants) {
             const participantId = participant._id.toString();
 
