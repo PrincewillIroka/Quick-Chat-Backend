@@ -76,10 +76,9 @@ const getChats = async (req, res) => {
               path: "messages.attachments",
             },
           ])
-          .exec()
-          .then((chatFound) => chatFound);
+          .lean();
 
-        chats = [chat].concat(chats);
+        chats = chats.map((ch) => (ch.chat_url === chatUrlParam ? chat : ch));
 
         // Broadcast to other participants that user has join this chat
         const { _id: chat_id, participants = [] } = chat;
@@ -87,18 +86,13 @@ const getChats = async (req, res) => {
           (participant) => participant._id.toString() === user_id
         );
 
-        for (let participant of participants) {
-          const participantId = participant._id.toString();
+        req.io.to(chatUrlParam).emit("participant-has-joined-chat", {
+          participant: participantFound,
+          chat_id,
+        });
 
-          if (participantId !== user_id) {
-            //To do: Send notification to participants, informing them that a
-            //a new user has joined the chat.
-            req.io.to(participantId).emit("participant-has-joined-chat", {
-              participant: participantFound,
-              chat_id,
-            });
-          }
-        }
+        //To do: Send notification to participants, informing them that a
+        //a new user has joined the chat.
       }
     }
 
