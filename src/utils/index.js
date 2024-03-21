@@ -44,7 +44,7 @@ const handleToken = async () => {
       const userNameIndex = usersThatHaveNotUpdatedUsername + 1;
       const user = await User.create({
         bs_token,
-        name: `New User ${userNameIndex}`,
+        name: `User ${userNameIndex}`,
       });
 
       const chatBot = await User.findOne({ isChatBot: true });
@@ -90,22 +90,21 @@ const handleToken = async () => {
       const chatBotAttachments = [
         {
           attachment: {
-            name: "CpBVc05.mp4",
+            name: "Quick_Chat_App_Demo.mp4",
             file_url: "https://i.imgur.com/CpBVc05.mp4",
             mimetype: "video/mp4",
           },
         },
         {
           attachment: {
-            name: "Screenshot_2023-07-06_at_17.22.44_mummw7.png",
-            file_url:
-              "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688660956/assets/Screenshot_2023-07-06_at_17.22.44_mummw7.png",
+            name: "Quick_Chat_App_Screenshot.png",
+            file_url: "https://i.imgur.com/sQWRjCJ.png",
             mimetype: "image/png",
           },
         },
         {
           attachment: {
-            name: "quick-chat_ntyhuo.pdf",
+            name: "Quick_Chat_App_Description.pdf",
             file_url:
               "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688662504/assets/quick-chat_ntyhuo.pdf",
             mimetype: "application/pdf",
