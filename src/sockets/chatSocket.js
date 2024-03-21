@@ -71,24 +71,27 @@ const chatSocket = (io, socket) => {
         (msg) => msg._id == message_id.toString()
       );
 
-      // Broadcast socket event to updatedChat.participants
+      //Broadcast socket event to updatedChat.participants
       const { participants = [] } = updatedChat;
       const messageSender = participants.find(
         (participant) => participant._id.toString() === sender_id
       );
 
-      for (let participant of participants) {
-        const { _id = "" } = participant;
-        const participantId = _id.toString();
+      participants.forEach(({ _id: participantId }) => {
+        participantId = participantId.toString();
+
+        socket.broadcast.to(participantId).emit("new-message-received", {
+          chat_id,
+          message_id,
+          newMessage: newMessageForReceiver,
+        });
+      });
+
+      //Handle notification (realtime & redis) to updatedChat.participants
+      participants.forEach(({ _id: participantId }) => {
+        participantId = participantId.toString();
 
         if (participantId !== sender_id) {
-          socket.broadcast.to(participantId).emit("new-message-received", {
-            chat_id,
-            message_id,
-            newMessage: newMessageForReceiver,
-            participantId,
-          });
-
           const userSelectedChat = global.selectedChat[participantId];
           const isCurrentSelectedChat = userSelectedChat === chat_url;
 
@@ -135,7 +138,7 @@ const chatSocket = (io, socket) => {
               });
           }
         }
-      }
+      });
     } catch (err) {
       console.error(err);
     }

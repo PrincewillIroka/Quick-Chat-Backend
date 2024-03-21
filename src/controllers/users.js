@@ -1,12 +1,15 @@
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
+import mongoose from "mongoose";
 import Chat from "../models/Chat";
 import User from "../models/User";
 import { handleToken } from "../utils";
 import config from "../config";
 import { uploader } from "../services";
 import redis from "../redis";
+
+const ObjectIdType = mongoose.Types.ObjectId;
 
 const getChats = async (req, res) => {
   try {
@@ -50,8 +53,17 @@ const getChats = async (req, res) => {
       );
 
       //If user isn't a participant && if this chat doesn't have a passcode.
+      //Add user as chat participant.
+
       if (!isParticipant && !passcode) {
-        //Add user as chat participant.
+        const newMessage = {
+          content: `${user?.name} joined this chat.`,
+          sender: user_id,
+          createdAt: new Date(),
+          _id: new ObjectIdType(),
+          messageType: "info",
+        };
+
         const chat = await Chat.findOneAndUpdate(
           {
             chat_url: chatUrlParam,
@@ -59,6 +71,7 @@ const getChats = async (req, res) => {
           {
             $push: {
               participants: user_id,
+              messages: newMessage,
             },
           },
           { new: true }
@@ -90,6 +103,7 @@ const getChats = async (req, res) => {
         req.io.to(chatUrlParam).emit("participant-has-joined-chat", {
           participant: participantFound,
           chat_id,
+          newMessage,
         });
 
         //To do: Send notification to participants, informing them that a

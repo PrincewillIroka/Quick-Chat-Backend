@@ -44,7 +44,7 @@ const handleToken = async () => {
       const userNameIndex = usersThatHaveNotUpdatedUsername + 1;
       const user = await User.create({
         bs_token,
-        name: `New User ${userNameIndex}`,
+        name: `User ${userNameIndex}`,
       });
 
       const chatBot = await User.findOne({ isChatBot: true });
