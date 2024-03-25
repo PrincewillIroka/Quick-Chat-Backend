@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Chat from "../models/Chat";
+import User from "../models/User";
 import { getTokenFromCookie, decryptData } from "../utils";
 import redis from "../redis";
 import { GPT_PARAMETERS } from "../constants";
@@ -55,7 +56,7 @@ const chatSocket = (io, socket) => {
         .populate([
           {
             path: "participants",
-            select: ["name", "photo", "isChatBot"],
+            select: ["name", "photo", "isChatBot", "totalGPTMessagesReceived"],
           },
           {
             path: "messages.sender",
@@ -85,79 +86,99 @@ const chatSocket = (io, socket) => {
       //Handle send message to GPT if chatbot is a participant in this chat.
       const chatBot = participants.find(({ isChatBot }) => isChatBot === true);
       if (chatBot) {
-        io.to(chat_url).emit(
-          "update-participant-typing",
-          "QuickChat Bot is typing..."
+        //Check if sender has exceeded totalGPTMessagesReceived.
+        const sender = participants.find(
+          ({ _id }) => _id.toString() === sender_id
         );
+        const { totalGPTMessagesReceived } = sender || {};
+        const canSendMessageToGPT =
+          Number(totalGPTMessagesReceived) <
+          Number(config.gpt.gpt_messages_limit);
 
-        const messages = GPT_PARAMETERS.map((message) => {
-          if (message.role === "user") {
-            message.content = decryptedContent;
-          }
+        if (canSendMessageToGPT) {
+          io.to(chat_url).emit(
+            "update-participant-typing",
+            "QuickChat Bot is typing..."
+          );
 
-          return message;
-        });
+          const messages = GPT_PARAMETERS.map((message) => {
+            if (message.role === "user") {
+              message.content = decryptedContent;
+            }
 
-        await openai.chat.completions
-          .create({
-            messages,
-            model: config.gpt.gpt_model,
-          })
-          .then(async (response) => {
-            const actualResponse = response?.choices[0]?.message?.content;
+            return message;
+          });
 
-            if (actualResponse) {
-              const message_id = new ObjectIdType();
-              let { _id: chatBotId = "" } = chatBot || {};
-              chatBotId = chatBotId.toString();
+          await openai.chat.completions
+            .create({
+              messages,
+              model: config.gpt.gpt_model,
+            })
+            .then(async (response) => {
+              const actualResponse = response?.choices[0]?.message?.content;
 
-              // console.debug({ api_response: actualResponse });
+              if (actualResponse) {
+                const message_id = new ObjectIdType();
+                let { _id: chatBotId = "" } = chatBot || {};
+                chatBotId = chatBotId.toString();
 
-              const updatedChat = await Chat.findByIdAndUpdate(
-                chat_id,
-                {
-                  $push: {
-                    messages: {
-                      content: actualResponse,
-                      sender: chatBotId,
-                      createdAt: new Date(),
-                      _id: message_id,
+                // console.debug({ api_response: actualResponse });
+
+                const updatedChat = await Chat.findByIdAndUpdate(
+                  chat_id,
+                  {
+                    $push: {
+                      messages: {
+                        content: actualResponse,
+                        sender: chatBotId,
+                        createdAt: new Date(),
+                        _id: message_id,
+                      },
                     },
                   },
-                },
-                { new: true }
-              )
-                .populate([
-                  {
-                    path: "participants",
-                    select: ["name", "photo", "isChatBot"],
-                  },
-                  {
-                    path: "messages.sender",
-                    select: ["name", "photo", "isChatBot"],
-                  },
-                  {
-                    path: "messages.attachments",
-                  },
-                ])
-                .lean();
+                  { new: true }
+                )
+                  .populate([
+                    {
+                      path: "participants",
+                      select: ["name", "photo", "isChatBot"],
+                    },
+                    {
+                      path: "messages.sender",
+                      select: ["name", "photo", "isChatBot"],
+                    },
+                    {
+                      path: "messages.attachments",
+                    },
+                  ])
+                  .lean();
 
-              const { messages: chatMessages = [] } = updatedChat;
+                const { messages: chatMessages = [] } = updatedChat;
 
-              const newMessageForReceiver = chatMessages.find(
-                (msg) => msg._id == message_id.toString()
-              );
-              io.to(chat_url).emit("new-message-received", {
-                chat_id,
-                message_id,
-                newMessage: newMessageForReceiver,
-              });
-            }
-          })
-          .catch((error) => {
-            io.to(chat_url).emit("update-participant-typing", "");
-            console.error(error);
-          });
+                const newMessageForReceiver = chatMessages.find(
+                  (msg) => msg._id == message_id.toString()
+                );
+                io.to(chat_url).emit("new-message-received", {
+                  chat_id,
+                  message_id,
+                  newMessage: newMessageForReceiver,
+                });
+
+                //Update totalGPTMessagesReceived for this sender
+                await User.findOneAndUpdate(
+                  { _id: sender_id },
+                  { $inc: { totalGPTMessagesReceived: 1 } },
+                  { new: true }
+                );
+              }
+            })
+            .catch((error) => {
+              io.to(chat_url).emit("update-participant-typing", "");
+              console.error(error);
+            });
+        } else {
+          // Todo: Send response to user that they've exceeded totalGPTMessagesReceived
+        }
       }
 
       //Handle notification (realtime & redis) to updatedChat.participants

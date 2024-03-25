@@ -21,6 +21,7 @@ const envVarsSchema = Joi.object({
   ENCRYPTION_SECURITY_KEY: Joi.string(),
   GPT_API_KEY: Joi.string(),
   GPT_MODEL: Joi.string(),
+  GPT_MESSAGES_LIMIT: Joi.number(),
 })
   .unknown(true)
   .required();
@@ -55,5 +56,6 @@ export default {
   gpt: {
     gpt_api_key: envVars.GPT_API_KEY,
     gpt_model: envVars.GPT_MODEL,
+    gpt_messages_limit: envVars.GPT_MESSAGES_LIMIT,
   },
 };
