@@ -49,10 +49,10 @@ const uploadFile = async (req, res) => {
       0
     );
 
-    if (totalFileSize > 5000000) {
+    if (totalFileSize > 2000000) {
       return res.send({
         success: false,
-        message: `Maximum size for files is 5MB.`,
+        message: `Maximum size for files is 2MB.`,
       });
     }
 
