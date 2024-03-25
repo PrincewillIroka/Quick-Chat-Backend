@@ -19,6 +19,8 @@ const envVarsSchema = Joi.object({
   ENCRYPTION_ALGORITHM: Joi.string(),
   ENCRYPTION_INIT_VECTOR: Joi.string(),
   ENCRYPTION_SECURITY_KEY: Joi.string(),
+  GPT_API_KEY: Joi.string(),
+  GPT_MODEL: Joi.string(),
 })
   .unknown(true)
   .required();
@@ -49,5 +51,9 @@ export default {
     algorithm: envVars.ENCRYPTION_ALGORITHM,
     initVector: envVars.ENCRYPTION_INIT_VECTOR,
     securityKey: envVars.ENCRYPTION_SECURITY_KEY,
+  },
+  gpt: {
+    gpt_api_key: envVars.GPT_API_KEY,
+    gpt_model: envVars.GPT_MODEL,
   },
 };

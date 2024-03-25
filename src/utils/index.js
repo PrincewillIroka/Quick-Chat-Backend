@@ -2,11 +2,11 @@ import mongoose from "mongoose";
 import cookie from "cookie";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
-
 import User from "../models/User";
 import Chat from "../models/Chat";
 import File from "../models/File";
 import config from "../config";
+import { CHAT_BOT_SETUP_MESSAGES } from "../constants";
 
 const ObjectIdType = mongoose.Types.ObjectId;
 
@@ -54,28 +54,25 @@ const handleToken = async () => {
       const participants = [chatBotId, creator_id];
       const chat_url = generateChatUrl();
 
-      let chatBotMessages = [
-        "Hello, welcome to QuickChat app.",
-        "Click on Start new conversation to create a new chat.",
-        "Then copy the chat link, and send to anyone you want to chat with.",
-        "",
-      ];
       let lastMsgId;
 
-      chatBotMessages = chatBotMessages.reduce((acc, cur, curIndex) => {
-        const message_id = new ObjectIdType();
-        if (curIndex === 3) {
-          lastMsgId = message_id;
-        }
-        cur = {
-          content: cur,
-          sender: chatBotId,
-          createdAt: new Date(),
-          _id: message_id,
-        };
-        acc = acc.concat([cur]);
-        return acc;
-      }, []);
+      const chatBotMessages = CHAT_BOT_SETUP_MESSAGES.reduce(
+        (acc, cur, curIndex) => {
+          const message_id = new ObjectIdType();
+          if (curIndex === 3) {
+            lastMsgId = message_id;
+          }
+          cur = {
+            content: cur,
+            sender: chatBotId,
+            createdAt: new Date(),
+            _id: message_id,
+          };
+          acc = acc.concat([cur]);
+          return acc;
+        },
+        []
+      );
 
       // Create default chat for new user & message from QuickChat bot
       const newChat = await Chat.create({

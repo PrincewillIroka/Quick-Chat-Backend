@@ -1,4 +1,5 @@
 import cloudinary from "cloudinary";
+import OpenAI from "openai";
 import config from "../config";
 
 cloudinary.config({
@@ -7,7 +8,7 @@ cloudinary.config({
   api_secret: config.upload.api_secret,
 });
 
-async function uploader(file, folder_id, public_id) {
+export async function uploader(file, folder_id, public_id) {
   return new Promise((resolve, reject) => {
     cloudinary.v2.uploader.upload(
       file,
@@ -28,4 +29,6 @@ async function uploader(file, folder_id, public_id) {
   });
 }
 
-export { uploader };
+export const openai = new OpenAI({
+  apiKey: config.gpt.gpt_api_key,
+});
