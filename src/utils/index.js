@@ -150,7 +150,7 @@ const handleToken = async () => {
 };
 
 const valdateToken = () => {
-  //To do: Generate bs_token through jwt and validate token here
+  //Todo: Generate bs_token through jwt and validate token here
 };
 
 const encryptData = (content) => {

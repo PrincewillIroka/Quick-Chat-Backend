@@ -106,7 +106,7 @@ const getChats = async (req, res) => {
           newMessage,
         });
 
-        //To do: Send notification to participants, informing them that a
+        //Todo: Send redis notification to participants that are'nt online, informing them that a
         //a new user has joined the chat.
       }
     }

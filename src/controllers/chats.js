@@ -203,7 +203,7 @@ const updateAccessRight = async (req, res) => {
 
         success = true;
 
-        //To do: Emit event to other users that a new participant has joined the chat.
+        //Todo: Emit event to other users that a new participant has joined the chat.
       } else {
         success = false;
       }
