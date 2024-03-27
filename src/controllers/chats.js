@@ -132,7 +132,7 @@ const uploadFile = async (req, res) => {
 
           const newFileId = newFile._id;
 
-          await File.findOneAndUpdate(
+          const updatedFile = await File.findOneAndUpdate(
             { _id: newFileId },
             {
               $set: {
@@ -141,15 +141,9 @@ const uploadFile = async (req, res) => {
               },
             },
             { new: true }
-          )
-            .then((updatedFile) => {
-              if (updatedFile) {
-                req.io.to(chat_url).emit("uploaded-file-success", updatedFile);
-              }
-            })
-            .catch((err) => {
-              if (err) throw err;
-            });
+          ).lean();
+
+          req.io.to(chat_url).emit("uploaded-file-success", updatedFile);
 
           //Adds newFileId to attachments array in messages
           await Chat.findOneAndUpdate(
