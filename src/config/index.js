@@ -50,7 +50,10 @@ export default {
     file_upload_limit: envVars.FILE_UPLOAD_LIMIT,
   },
   serverAddress: envVars.SERVER_ADDRESS,
-  redisUrl: envVars.REDIS_URL,
+  redis: {
+    redis_url: envVars.REDIS_URL,
+    can_clear_redis: envVars.CAN_CLEAR_REDIS,
+  },
   encryption: {
     algorithm: envVars.ENCRYPTION_ALGORITHM,
     initVector: envVars.ENCRYPTION_INIT_VECTOR,

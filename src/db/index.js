@@ -4,15 +4,11 @@ import config from "../config";
 export default {
   connect() {
     try {
-      if (config.environment === "development") {
-        mongoose.connect(dbString, {
-          user: config.db.user,
-          pass: config.db.pass,
-          authSource: config.db.authSource,
-        });
-      } else {
-        mongoose.connect(config.db.dbConnection);
-      }
+      mongoose.connect(config.db.dbConnection, {
+        user: config.db.user,
+        pass: config.db.pass,
+        authSource: config.db.authSource,
+      });
 
       mongoose.connection.on("connected", () => {
         console.log("Database connection established");
