@@ -3,6 +3,7 @@ import path from "path";
 import { generateChatUrl, encryptData, decryptData } from "../utils";
 import Chat from "../models/Chat";
 import File from "../models/File";
+import User from "../models/User";
 import { uploader } from "../services";
 import config from "../config";
 
@@ -44,15 +45,33 @@ const uploadFile = async (req, res) => {
     const { chat_id, chat_url, sender_id, message_id } = req.body;
     const files = req.files || [];
 
-    const totalFileSize = Object.values(files).reduce(
+    const sizeOfFilesForUpload = Object.values(files).reduce(
       (acc, cur) => acc + cur.size,
       0
     );
 
-    if (totalFileSize > 2000000) {
+    let maxFileSizeErrorMessage;
+    const isGreaterThanMaxFileSize = sizeOfFilesForUpload > 2000000;
+
+    if (isGreaterThanMaxFileSize) {
+      maxFileSizeErrorMessage = "Maximum size for files is 2MB.";
+    } else {
+      const user = await User.findOne({ _id: sender_id }).lean();
+      const totalSizeOfFilesUploaded = user?.totalSizeOfFilesUploaded || 0;
+      const grandTotal =
+        Number(totalSizeOfFilesUploaded) + sizeOfFilesForUpload;
+      const hasExceededFileUploadLimit =
+        grandTotal > Number(config.upload.file_upload_limit);
+
+      if (hasExceededFileUploadLimit) {
+        maxFileSizeErrorMessage = "You have exceeded your file upload limit.";
+      }
+    }
+
+    if (maxFileSizeErrorMessage) {
       return res.send({
         success: false,
-        message: `Maximum size for files is 2MB.`,
+        message: maxFileSizeErrorMessage,
       });
     }
 
@@ -84,7 +103,12 @@ const uploadFile = async (req, res) => {
 
           let fileUploadResult, file_url;
 
-          if (config.environment !== "production") {
+          if (config.environment === "production") {
+            fileUploadResult = await uploader(value.tempFilePath, chat_id).then(
+              async (result) => result
+            );
+            file_url = fileUploadResult.secure_url;
+          } else {
             // Local file upload
             const folder_path = `static/chat_images/${chat_id}`;
 
@@ -104,11 +128,6 @@ const uploadFile = async (req, res) => {
                 return rs;
               }
             );
-          } else {
-            fileUploadResult = await uploader(value.tempFilePath, chat_id).then(
-              async (result) => result
-            );
-            file_url = fileUploadResult.secure_url;
           }
 
           const newFileId = newFile._id;
@@ -139,6 +158,13 @@ const uploadFile = async (req, res) => {
           );
 
           req.io.to(chat_url).emit("uploaded-file-success", updatedFile);
+
+          //Update totalSizeOfFilesUploaded for this sender after successful file upload
+          await User.findOneAndUpdate(
+            { _id: sender_id },
+            { $inc: { totalSizeOfFilesUploaded: sizeOfFilesForUpload } },
+            { new: true }
+          );
 
           // Todo: Switch file upload to use readable & writeable stream
           // const readableStream = fs.createReadStream().from(data);

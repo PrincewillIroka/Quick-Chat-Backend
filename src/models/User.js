@@ -10,6 +10,7 @@ const UserShema = new mongoose.Schema(
     isChatBot: { type: Boolean, default: false },
     isDarkMode: { type: Boolean, default: false },
     totalGPTMessagesReceived: { type: Number, default: 0 },
+    totalSizeOfFilesUploaded: { type: Number, default: 0 },
   },
   { usePushEach: true, timestamps: true }
 );

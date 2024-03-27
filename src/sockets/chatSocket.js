@@ -204,7 +204,7 @@ const chatSocket = (io, socket) => {
                 .getClient()
                 .get(`notification-${participantId}`);
 
-              notifications = JSON.parse(notifications) || [];
+              notifications = notifications ? JSON.parse(notifications) : [];
               notifications = notifications.concat(notifications, [
                 {
                   message_id,
@@ -214,13 +214,15 @@ const chatSocket = (io, socket) => {
                 },
               ]);
 
-              const updatedNotifications = await redis
-                .getClient()
-                .set(
-                  `notification-${participantId}`,
-                  JSON.stringify(notifications)
-                );
-              resolve(updatedNotifications);
+              if (notifications.length) {
+                const updatedNotifications = await redis
+                  .getClient()
+                  .set(
+                    `notification-${participantId}`,
+                    JSON.stringify(notifications)
+                  );
+                resolve(updatedNotifications);
+              }
             });
           }
 

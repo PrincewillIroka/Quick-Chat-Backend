@@ -159,43 +159,61 @@ const updateUser = async (req, res) => {
     const { username: name, user_id } = req.body;
     const files = req.files || [];
     const file = Object.values(files)[0];
-    let photoUrl;
+    const sizeOfFilesForUpload = file?.size;
+    let photoUrl, photoUploadedSuccessfully;
 
-    if (file) {
-      if (config.environment !== "production") {
-        // Local file upload
-        const folder_path = `assets/${user_id}`;
+    if (file && sizeOfFilesForUpload < 2000000) {
+      const user = await User.findOne({ _id: user_id }).lean();
+      const totalSizeOfFilesUploaded = user?.totalSizeOfFilesUploaded || 0;
+      const grandTotal =
+        Number(totalSizeOfFilesUploaded) + sizeOfFilesForUpload;
+      const hasExceededFileUploadLimit =
+        grandTotal > Number(config.upload.file_upload_limit);
 
-        const staticFolder = path.join(process.cwd(), folder_path);
-        if (!fs.existsSync(staticFolder)) {
-          fs.mkdirSync(staticFolder, { recursive: true });
+      if (!hasExceededFileUploadLimit) {
+        if (config.environment === "production") {
+          const uploadResult = await uploader(
+            file.tempFilePath,
+            user_id,
+            user_id //Pass user_id as public_id to prevent uploading profile photo duplicates
+          );
+          photoUrl = uploadResult.secure_url;
+        } else {
+          // Local file upload
+          const folder_path = `assets/${user_id}`;
+
+          const staticFolder = path.join(process.cwd(), folder_path);
+          if (!fs.existsSync(staticFolder)) {
+            fs.mkdirSync(staticFolder, { recursive: true });
+          }
+
+          const file_name = new Date().valueOf();
+          const file_path = `${folder_path}/${file_name}`;
+          photoUrl = `${config.serverAddress}/api/assets/${user_id}/${file_name}`;
+
+          const { data } = file;
+
+          await fs.writeFile(file_path, data, (err, rs) => {
+            if (err) throw err;
+            return rs;
+          });
         }
-
-        const file_name = new Date().valueOf();
-        const file_path = `${folder_path}/${file_name}`;
-        photoUrl = `${config.serverAddress}/api/assets/${user_id}/${file_name}`;
-
-        const { data } = file;
-
-        await fs.writeFile(file_path, data, (err, rs) => {
-          if (err) throw err;
-          return rs;
-        });
-      } else {
-        const uploadResult = await uploader(
-          file.tempFilePath,
-          user_id,
-          user_id //Pass user_id as public_id to prevent uploading profile photo duplicates
-        );
-        photoUrl = uploadResult.secure_url;
+        photoUploadedSuccessfully = true;
       }
     }
 
     const updatedUser = await User.findOneAndUpdate(
       { _id: user_id },
       {
-        ...(name && { name, hasUpdatedUsername: true }),
-        ...(photoUrl && { photo: photoUrl }),
+        $set: {
+          ...(name && { name, hasUpdatedUsername: true }),
+          ...(photoUploadedSuccessfully && { photo: photoUrl }),
+        },
+        $inc: {
+          ...(photoUploadedSuccessfully && {
+            totalSizeOfFilesUploaded: sizeOfFilesForUpload,
+          }),
+        },
       },
       { new: true }
     );
@@ -211,13 +229,7 @@ const setUpChatBot = async () => {
   try {
     const chatBot = await User.findOne({ isChatBot: true });
     if (!chatBot) {
-      let photo;
-      if (config.environment !== "production") {
-        photo = `${config.serverAddress}/api/assets/quickchat-bot-photo.png`;
-      } else {
-        photo =
-          "https://res.cloudinary.com/dhz0mnlc2/image/upload/v1688341854/assets/mytxrieabnapp4csyghj.avif";
-      }
+      const photo = config.chat_bot.photo;
 
       const uidv4 = uuidv4();
       const bs_token = `${uidv4}_${Date.now()}`;
