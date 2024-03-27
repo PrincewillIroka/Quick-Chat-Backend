@@ -4,8 +4,14 @@ import {
   authenticateUser,
   updateUser,
   updateDarkMode,
+  getNotifications,
 } from "../controllers";
-import { validator, authenticateUserData, getChatsData } from "../validators";
+import {
+  validator,
+  authenticateUserData,
+  getChatsData,
+  getNotificationsData,
+} from "../validators";
 
 const router = express.Router();
 
@@ -18,5 +24,11 @@ router.post(
 );
 router.patch("/updateUser", updateUser);
 router.patch("/updateDarkMode", updateDarkMode);
+router.post(
+  "/getNotifications",
+  getNotificationsData,
+  validator,
+  getNotifications
+);
 
 export default router;
