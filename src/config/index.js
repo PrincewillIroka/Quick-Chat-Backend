@@ -24,6 +24,7 @@ const envVarsSchema = Joi.object({
   GPT_MESSAGES_LIMIT: Joi.number(),
   FILE_UPLOAD_LIMIT: Joi.number(),
   CHAT_BOT_PHOTO: Joi.string(),
+  CAN_CLEAR_REDIS: Joi.string(),
 })
   .unknown(true)
   .required();
