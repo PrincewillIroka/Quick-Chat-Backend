@@ -1,3 +1,4 @@
+import { type } from "@hapi/joi/lib/extend";
 import mongoose from "mongoose";
 
 const UserShema = new mongoose.Schema(
@@ -8,6 +9,8 @@ const UserShema = new mongoose.Schema(
     hasUpdatedUsername: { type: Boolean, default: false },
     isChatBot: { type: Boolean, default: false },
     isDarkMode: { type: Boolean, default: false },
+    totalGPTMessagesReceived: { type: Number, default: 0 },
+    totalSizeOfFilesUploaded: { type: Number, default: 0 },
   },
   { usePushEach: true, timestamps: true }
 );

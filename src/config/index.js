@@ -21,6 +21,10 @@ const envVarsSchema = Joi.object({
   ENCRYPTION_SECURITY_KEY: Joi.string(),
   GPT_API_KEY: Joi.string(),
   GPT_MODEL: Joi.string(),
+  GPT_MESSAGES_LIMIT: Joi.number(),
+  FILE_UPLOAD_LIMIT: Joi.number(),
+  CHAT_BOT_PHOTO: Joi.string(),
+  CAN_CLEAR_REDIS: Joi.string(),
 })
   .unknown(true)
   .required();
@@ -44,9 +48,13 @@ export default {
     cloud_name: envVars.CLOUDINARY_CLOUD_NAME,
     api_key: envVars.CLOUDINARY_API_KEY,
     api_secret: envVars.CLOUDINARY_API_SECRET,
+    file_upload_limit: envVars.FILE_UPLOAD_LIMIT,
   },
   serverAddress: envVars.SERVER_ADDRESS,
-  redisUrl: envVars.REDIS_URL,
+  redis: {
+    redis_url: envVars.REDIS_URL,
+    can_clear_redis: envVars.CAN_CLEAR_REDIS,
+  },
   encryption: {
     algorithm: envVars.ENCRYPTION_ALGORITHM,
     initVector: envVars.ENCRYPTION_INIT_VECTOR,
@@ -55,5 +63,7 @@ export default {
   gpt: {
     gpt_api_key: envVars.GPT_API_KEY,
     gpt_model: envVars.GPT_MODEL,
+    gpt_messages_limit: envVars.GPT_MESSAGES_LIMIT,
   },
+  chat_bot: { photo: envVars.CHAT_BOT_PHOTO },
 };
