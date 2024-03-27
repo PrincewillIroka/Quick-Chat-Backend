@@ -56,7 +56,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-// app.use(rateLimitMiddleware);
+app.use(rateLimitMiddleware);
 
 app.use("/api", router);
 app.use("/api/assets", express.static(path.join(__dirname, "../assets")));
