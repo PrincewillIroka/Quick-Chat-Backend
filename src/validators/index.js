@@ -40,3 +40,5 @@ export const deleteBookmarkData = [
   body("creator_id").isString(),
   body("bookmark_id").isString(),
 ];
+
+export const getNotificationsData = [body("bs_token").isString()];

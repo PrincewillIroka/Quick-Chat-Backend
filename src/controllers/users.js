@@ -111,11 +111,7 @@ const getChats = async (req, res) => {
       }
     }
 
-    // await redis.getClient().del(`notification-${user_id}`);
-    let notifications = await redis.getClient().get(`notification-${user_id}`);
-    notifications = JSON.parse(notifications) || [];
-
-    res.send({ success: true, chats, notifications });
+    res.send({ success: true, chats });
   } catch (error) {
     console.error(error);
     res.status(500);
@@ -268,4 +264,29 @@ const updateDarkMode = async (req, res) => {
   }
 };
 
-export { getChats, authenticateUser, updateUser, setUpChatBot, updateDarkMode };
+const getNotifications = async (req, res) => {
+  try {
+    const { bs_token = "" } = req.body;
+
+    const user = await User.findOne({ bs_token });
+    const user_id = user?._id.toString();
+
+    // await redis.getClient().del(`notification-${user_id}`);
+    let notifications = await redis.getClient().get(`notification-${user_id}`);
+    notifications = JSON.parse(notifications) || [];
+
+    res.send({ success: true, notifications });
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+  }
+};
+
+export {
+  getChats,
+  authenticateUser,
+  updateUser,
+  setUpChatBot,
+  updateDarkMode,
+  getNotifications,
+};
