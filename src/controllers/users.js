@@ -92,6 +92,7 @@ const getChats = async (req, res) => {
           .sort([["updatedAt", -1]])
           .lean();
 
+        //Add this chat to already found chats
         chats = chats.map((ch) => (ch.chat_url === chatUrlParam ? chat : ch));
 
         // Broadcast to other participants that user has join this chat
