@@ -64,7 +64,7 @@ const getChats = async (req, res) => {
           messageType: "info",
         };
 
-        const chat = await Chat.findOneAndUpdate(
+        await Chat.findOneAndUpdate(
           {
             chat_url: chatUrlParam,
           },
@@ -90,21 +90,29 @@ const getChats = async (req, res) => {
             },
           ])
           .sort([["updatedAt", -1]])
-          .lean();
+          .then((chat) => {
+            if (chat) {
+              //Add this chat to already found chats
+              chats = chats.map((ch) =>
+                ch.chat_url === chatUrlParam ? chat : ch
+              );
 
-        chats = chats.map((ch) => (ch.chat_url === chatUrlParam ? chat : ch));
+              // Broadcast to other participants that user has join this chat
+              const { _id: chat_id, participants = [] } = chat;
+              const participantFound = participants.find(
+                (participant) => participant._id.toString() === user_id
+              );
 
-        // Broadcast to other participants that user has join this chat
-        const { _id: chat_id, participants = [] } = chat;
-        const participantFound = participants.find(
-          (participant) => participant._id.toString() === user_id
-        );
-
-        req.io.to(chatUrlParam).emit("participant-has-joined-chat", {
-          participant: participantFound,
-          chat_id,
-          newMessage,
-        });
+              req.io.to(chatUrlParam).emit("participant-has-joined-chat", {
+                participant: participantFound,
+                chat_id,
+                newMessage,
+              });
+            }
+          })
+          .catch((err) => {
+            if (err) throw err;
+          });
 
         //Todo: Send redis notification to participants that are'nt online, informing them that a
         //a new user has joined the chat.
