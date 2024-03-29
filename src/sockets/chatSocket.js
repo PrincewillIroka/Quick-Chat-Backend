@@ -96,10 +96,10 @@ const chatSocket = (io, socket) => {
           Number(config.gpt.gpt_messages_limit);
 
         if (canSendMessageToGPT) {
-          io.to(chat_url).emit(
-            "update-participant-typing",
-            "QuickChat Bot is typing..."
-          );
+          io.to(chat_url).emit("update-participant-typing", {
+            chat_url,
+            message: "QuickChat Bot is typing...",
+          });
 
           const messages = GPT_PARAMETERS.map((message) => {
             if (message.role === "user") {
@@ -162,6 +162,7 @@ const chatSocket = (io, socket) => {
                   chat_id,
                   message_id,
                   newMessage: newMessageForReceiver,
+                  chat_url,
                 });
 
                 //Update totalGPTMessagesReceived for this sender
@@ -173,7 +174,10 @@ const chatSocket = (io, socket) => {
               }
             })
             .catch((error) => {
-              io.to(chat_url).emit("update-participant-typing", "");
+              io.to(chat_url).emit("update-participant-typing", {
+                chat_url,
+                message: "",
+              });
               console.error(error);
             });
         } else {
@@ -250,7 +254,9 @@ const chatSocket = (io, socket) => {
   });
 
   socket.on("participant-is-typing", ({ chat_url, message }) => {
-    socket.broadcast.to(chat_url).emit("update-participant-typing", message);
+    socket.broadcast
+      .to(chat_url)
+      .emit("update-participant-typing", { chat_url, message });
   });
 };
 
