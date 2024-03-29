@@ -89,7 +89,6 @@ const getChats = async (req, res) => {
               path: "messages.attachments",
             },
           ])
-          .sort([["updatedAt", -1]])
           .lean();
 
         //Add this chat to already found chats
