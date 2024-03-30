@@ -89,7 +89,6 @@ const getChats = async (req, res) => {
               path: "messages.attachments",
             },
           ])
-          .sort([["updatedAt", -1]])
           .lean();
 
         //Add this chat to already found chats
@@ -213,9 +212,21 @@ const updateUser = async (req, res) => {
         },
       },
       { new: true }
-    );
+    ).lean();
 
-    res.send({ user: updatedUser });
+    let {
+      bs_token,
+      totalGPTMessagesReceived,
+      totalSizeOfFilesUploaded,
+      createdAt,
+      updatedAt,
+      ...rest
+    } = updatedUser;
+
+    // When a user updates their name/photo, other participants should be notified.
+    req.io.emit("participant-profile-updated", { updatedParticipant: rest });
+
+    res.send({ success: true, updatedUser: rest });
   } catch (error) {
     console.error(error);
     res.status(500);
