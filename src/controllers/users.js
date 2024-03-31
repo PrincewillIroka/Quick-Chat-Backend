@@ -100,7 +100,7 @@ const getChats = async (req, res) => {
           (participant) => participant._id.toString() === user_id
         );
 
-        req.io.to(chatUrlParam).emit("participant-has-joined-chat", {
+        req.io.emit("participant-has-joined-chat", {
           participant: participantFound,
           chat_id,
           newMessage,
