@@ -244,4 +244,29 @@ const updateAccessRight = async (req, res) => {
   }
 };
 
-export { createChat, uploadFile, updateAccessRight };
+const renameChat = async (req, res) => {
+  try {
+    const { chat_id, chat_name } = req.body;
+
+    const chat = await Chat.findById(chat_id).lean();
+
+    if (!chat) {
+      res.send({ success: false });
+    }
+
+    const updatedChat = await Chat.findOneAndUpdate(
+      { _id: chat_id },
+      {
+        ...(chat_name && { chat_name }),
+      },
+      { new: true }
+    ).lean();
+
+    res.send({ success: true, chat_name });
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+  }
+};
+
+export { createChat, uploadFile, updateAccessRight, renameChat };
