@@ -266,8 +266,9 @@ const updateDarkMode = async (req, res) => {
         isDarkMode,
       },
       { new: true }
-    );
-    const updatedDarkMode = updatedUser.isDarkMode;
+    ).lean();
+
+    const { isDarkMode: updatedDarkMode } = updatedUser;
 
     res.send({ success: true, updatedDarkMode });
   } catch (error) {
