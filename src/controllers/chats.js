@@ -244,36 +244,4 @@ const updateAccessRight = async (req, res) => {
   }
 };
 
-const renameChat = async (req, res) => {
-  try {
-    let { chat_id, chat_name } = req.body;
-
-    const chat = await Chat.findById(chat_id).lean();
-
-    if (!chat) {
-      res.send({ success: false });
-    }
-
-    const updatedChat = await Chat.findOneAndUpdate(
-      { _id: chat_id },
-      {
-        ...(chat_name && { chat_name }),
-      },
-      { new: true }
-    ).lean();
-
-    chat_name = updatedChat.chat_name;
-
-    // When a user updates the chat_name, other participants should be notified.
-    req.io.emit("chat-renamed", { chat_name, chat_id });
-
-    //Todo: Save notification that chat was renamed to Redis
-
-    res.send({ success: true, chat_name });
-  } catch (error) {
-    console.error(error);
-    res.status(500);
-  }
-};
-
-export { createChat, uploadFile, updateAccessRight, renameChat };
+export { createChat, uploadFile, updateAccessRight };
