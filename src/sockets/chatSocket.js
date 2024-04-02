@@ -10,25 +10,6 @@ import { openai } from "../services";
 const ObjectIdType = mongoose.Types.ObjectId;
 
 const chatSocket = (io, socket) => {
-  socket.on("join", async ({ user_id }) => {
-    // const bs_token = getTokenFromCookie(socket.handshake.headers);
-    socket.join(user_id);
-    global.users[socket.id] = user_id;
-
-    console.debug("User joined successfully!", {
-      socketId: socket.id,
-      user_id,
-    });
-  });
-
-  socket.on("disconnect", () => {
-    const socketId = socket.id;
-    const user_id = global.users[socketId];
-    console.debug("User disconnected!", { socketId, user_id });
-    delete global.users[socketId];
-    delete global.selectedChat[user_id];
-  });
-
   socket.on("new-message-sent", async (arg, ack) => {
     try {
       const { chat_url, chat_id, content, sender_id } = arg;
@@ -248,7 +229,7 @@ const chatSocket = (io, socket) => {
     }
   });
 
-  socket.on("participant-join-selected-chat", async ({ user_id, chat_url }) => {
+  socket.on("participant-join-selected-chat", ({ user_id, chat_url }) => {
     socket.join(chat_url);
     global.selectedChat[user_id] = chat_url;
   });
@@ -257,6 +238,54 @@ const chatSocket = (io, socket) => {
     socket.broadcast
       .to(chat_url)
       .emit("update-participant-typing", { chat_url, message });
+  });
+
+  socket.on("rename-chat", async (args, ack) => {
+    let { chat_id, chat_name } = args;
+
+    const chat = await Chat.findById(chat_id).lean();
+
+    if (!chat) {
+      ack({ success: false, message: "Chat not found!" });
+      return;
+    }
+
+    const updatedChat = await Chat.findOneAndUpdate(
+      { _id: chat_id },
+      {
+        ...(chat_name && { chat_name }),
+      },
+      { new: true }
+    ).lean();
+
+    chat_name = updatedChat.chat_name;
+
+    // When a user updates the chat_name, other participants should be notified.
+    socket.broadcast.emit("chat-renamed", { chat_name, chat_id });
+
+    //Todo: Save notification that chat was renamed to Redis
+
+    ack({ success: true, chat_name });
+  });
+
+  socket.on("delete-chat", async (args, ack) => {
+    let { chat_id } = args;
+
+    const chat = await Chat.findById(chat_id).lean();
+
+    if (!chat) {
+      ack({ success: false, message: "Chat not found!" });
+      return;
+    }
+
+    await Chat.findOneAndDelete({ _id: chat_id });
+
+    //When a user deletes the chat, other participants should be notified.
+    socket.broadcast.emit("chat-deleted", { chat_id });
+
+    //Todo: Save notification that "chat was deleted" to Redis
+
+    ack({ success: true, chat_id });
   });
 };
 

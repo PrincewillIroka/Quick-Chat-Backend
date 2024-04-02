@@ -100,7 +100,7 @@ const getChats = async (req, res) => {
           (participant) => participant._id.toString() === user_id
         );
 
-        req.io.to(chatUrlParam).emit("participant-has-joined-chat", {
+        req.io.emit("participant-has-joined-chat", {
           participant: participantFound,
           chat_id,
           newMessage,
@@ -266,8 +266,9 @@ const updateDarkMode = async (req, res) => {
         isDarkMode,
       },
       { new: true }
-    );
-    const updatedDarkMode = updatedUser.isDarkMode;
+    ).lean();
+
+    const { isDarkMode: updatedDarkMode } = updatedUser;
 
     res.send({ success: true, updatedDarkMode });
   } catch (error) {
