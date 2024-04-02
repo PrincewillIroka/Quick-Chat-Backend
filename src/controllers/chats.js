@@ -1,11 +1,14 @@
 import fs from "fs";
 import path from "path";
+import mongoose from "mongoose";
 import { generateChatUrl, encryptData, decryptData } from "../utils";
 import Chat from "../models/Chat";
 import File from "../models/File";
 import User from "../models/User";
 import { uploader } from "../services";
 import config from "../config";
+
+const ObjectIdType = mongoose.Types.ObjectId;
 
 const createChat = async (req, res) => {
   try {
@@ -202,12 +205,23 @@ const updateAccessRight = async (req, res) => {
       const decryptedPasscode = decryptData(chat.passcode);
 
       if (decryptedPasscode === passcode) {
+        const user = await User.findOne({ _id: user_id }).lean();
+
+        const newMessage = {
+          content: `${user?.name} joined this chat.`,
+          sender: user_id,
+          createdAt: new Date(),
+          _id: new ObjectIdType(),
+          messageType: "info",
+        };
+
         updatedChat = await Chat.findByIdAndUpdate(
           { _id: chat_id },
           {
             $push: {
               access_rights: user_id,
               participants: user_id,
+              messages: newMessage,
             },
           },
           { new: true }
@@ -228,6 +242,18 @@ const updateAccessRight = async (req, res) => {
           .lean();
 
         success = true;
+
+        // Broadcast to other participants that user has joined this chat
+        const { participants = [] } = updatedChat;
+        const participantFound = participants.find(
+          (participant) => participant._id.toString() === user_id
+        );
+
+        req.io.emit("participant-has-joined-chat", {
+          participant: participantFound,
+          chat_id,
+          newMessage,
+        });
 
         //Todo: Emit event to other users that a new participant has joined the chat.
       } else {

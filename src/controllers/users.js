@@ -94,7 +94,7 @@ const getChats = async (req, res) => {
         //Add this chat to already found chats
         chats = chats.map((ch) => (ch.chat_url === chatUrlParam ? chat : ch));
 
-        // Broadcast to other participants that user has join this chat
+        // Broadcast to other participants that user has joined this chat
         const { _id: chat_id, participants = [] } = chat;
         const participantFound = participants.find(
           (participant) => participant._id.toString() === user_id
