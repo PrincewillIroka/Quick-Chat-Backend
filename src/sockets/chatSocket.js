@@ -287,6 +287,52 @@ const chatSocket = (io, socket) => {
 
     ack({ success: true, chat_id });
   });
+
+  socket.on("remove-participant", async (args, ack) => {
+    let { sender_id, chat_id, participant_id } = args;
+
+    const chat = await Chat.findById(chat_id).lean();
+
+    if (!chat) {
+      ack({ success: false, message: "Chat not found!" });
+      return;
+    }
+
+    const user = await User.findOne({ _id: participant_id }).lean();
+
+    const newMessage = {
+      content: `${user?.name} was removed from this chat.`,
+      sender: sender_id,
+      createdAt: new Date(),
+      _id: new ObjectIdType(),
+      messageType: "info",
+    };
+
+    await Chat.findOneAndUpdate(
+      { _id: chat_id },
+      {
+        $push: {
+          messages: newMessage,
+        },
+        $pull: {
+          participants: participant_id,
+          access_rights: participant_id,
+        },
+      },
+      { new: true }
+    );
+
+    //When a user deletes the chat, other participants should be notified.
+    socket.broadcast.emit("participant-removed", {
+      chat_id,
+      participant_id,
+      newMessage,
+    });
+
+    //Todo: Save notification that "chat was deleted" to Redis
+
+    ack({ success: true, chat_id, participant_id, newMessage });
+  });
 };
 
 export default chatSocket;
