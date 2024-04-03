@@ -28,14 +28,14 @@ const whitelist = [config.frontendAppUrl];
 const corsOptions = {
   credentials: true,
   origin: function (origin, callback) {
-    if (!origin && config.environment !== "production") {
-      //for bypassing postman req with no origin && development environment
-      return callback(null, true);
-    }
-    if (whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
+    if (config.environment === "production") {
+      if (origin && whitelist.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(null, true);
     }
   },
 };

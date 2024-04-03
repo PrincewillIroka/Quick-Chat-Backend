@@ -2,7 +2,7 @@ import config from "../config";
 
 export const CHAT_BOT_SETUP_MESSAGES = [
   "Hello, welcome to QuickChat app.",
-  "Click on Start new conversation to create a new chat.",
+  "Click on Create new chat to create a new chat.",
   "Then copy the chat link, and send to anyone you want to chat with.",
   "",
 ];
