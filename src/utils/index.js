@@ -59,7 +59,7 @@ const handleToken = async () => {
       const chatBotMessages = CHAT_BOT_SETUP_MESSAGES.reduce(
         (acc, cur, curIndex) => {
           const message_id = new ObjectIdType();
-          if (curIndex === 3) {
+          if (curIndex === CHAT_BOT_SETUP_MESSAGES.length - 1) {
             lastMsgId = message_id;
           }
           cur = {
