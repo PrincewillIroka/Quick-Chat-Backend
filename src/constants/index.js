@@ -9,7 +9,8 @@ export const CHAT_BOT_SETUP_MESSAGES = [
 export const GPT_PARAMETERS = [
   {
     role: "system",
-    content: "You are a chatbot that can chat to multiple users.",
+    content:
+      "Your name is QuickChatBot and you are a chat bot that can chat with multiple users.",
   },
   {
     role: "user",
