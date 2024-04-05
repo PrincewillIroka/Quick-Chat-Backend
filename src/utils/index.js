@@ -173,7 +173,7 @@ const decryptData = (content) => {
     config.encryption.initVector
   );
 
-  let decryptedData = decipher.update(content, "hex", "utf-8");
+  let decryptedData = decipher.update(content, "hex", "utf8");
   decryptedData += decipher.final("utf8");
 
   return decryptedData;

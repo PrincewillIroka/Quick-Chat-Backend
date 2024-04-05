@@ -103,8 +103,6 @@ const chatSocket = (io, socket) => {
                 let { _id: chatBotId = "" } = chatBot || {};
                 chatBotId = chatBotId.toString();
 
-                // console.debug({ api_response: actualResponse });
-
                 const updatedChat = await Chat.findByIdAndUpdate(
                   chat_id,
                   {
