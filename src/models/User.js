@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 const UserShema = new mongoose.Schema(
   {
-    name: String,
+    name: { type: String, unique: true },
     photo: String,
     bs_token: String,
     hasUpdatedUsername: { type: Boolean, default: false },
