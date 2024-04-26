@@ -5,7 +5,7 @@ import { generateChatUrl, encryptData, decryptData } from "../utils";
 import Chat from "../models/Chat";
 import File from "../models/File";
 import User from "../models/User";
-import { uploader } from "../services";
+import { uploader } from "../services/fileUploadServices";
 import config from "../config";
 
 const ObjectIdType = mongoose.Types.ObjectId;
@@ -65,12 +65,9 @@ const uploadFile = async (req, res) => {
     const { chat_id, chat_url, sender_id, message_id } = req.body;
     const files = req.files || [];
 
-    console.log("files", files);
 
     const sizeOfFilesForUpload = Object.values(files).reduce((acc, cur) => {
-      console.log("cur", cur);
       const decryptedCur = decryptData(cur);
-      console.log("decryptedCur", decryptedCur);
       return acc + decryptedCur.size;
     }, 0);
 

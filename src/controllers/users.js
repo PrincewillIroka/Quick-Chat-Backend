@@ -6,7 +6,7 @@ import Chat from "../models/Chat";
 import User from "../models/User";
 import { handleToken } from "../utils";
 import config from "../config";
-import { uploader } from "../services";
+import { uploader } from "../services/fileUploadServices";
 import redis from "../redis";
 
 const ObjectIdType = mongoose.Types.ObjectId;
