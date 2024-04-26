@@ -5,7 +5,7 @@ import { getTokenFromCookie, decryptData } from "../utils";
 import redis from "../redis";
 import { GPT_PARAMETERS } from "../constants";
 import config from "../config";
-import { openai } from "../services";
+import { createMessage } from "../services/GPTServices";
 
 const ObjectIdType = mongoose.Types.ObjectId;
 
@@ -95,17 +95,18 @@ const chatSocket = (io, socket) => {
               message.content = decryptedContent;
             }
 
+            if (message.role === "system") {
+              const botPrompt = chatBot?.chatBotDetails?.botPrompt;
+              message.content = botPrompt || message.content;
+            }
+
             return message;
           });
 
-          await openai.chat.completions
-            .create({
-              messages,
-              model: config.gpt.gpt_model,
-            })
-            .then(async (response) => {
-              const actualResponse = response?.choices[0]?.message?.content;
-
+          await createMessage({
+            messages,
+          })
+            .then(async (actualResponse) => {
               if (actualResponse) {
                 const message_id = new ObjectIdType();
                 let { _id: chatBotId = "" } = chatBot || {};
