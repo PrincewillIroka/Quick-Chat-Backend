@@ -10,7 +10,7 @@ export const GPT_PARAMETERS = [
   {
     role: "system",
     content:
-      "Your name is QuickChatBot and you are a chat bot that can chat with multiple users.",
+      "Your name is QuickChatBot and you are a helpful assistant that can chat with multiple users.",
   },
   {
     role: "user",

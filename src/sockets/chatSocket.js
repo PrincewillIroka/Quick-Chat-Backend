@@ -37,7 +37,13 @@ const chatSocket = (io, socket) => {
         .populate([
           {
             path: "participants",
-            select: ["name", "photo", "isChatBot", "totalGPTMessagesReceived"],
+            select: [
+              "name",
+              "photo",
+              "isChatBot",
+              "totalGPTMessagesReceived",
+              "chatBotDetails",
+            ],
           },
           {
             path: "messages.sender",
@@ -66,7 +72,7 @@ const chatSocket = (io, socket) => {
 
       //Handle send message to GPT if chatbot is a participant in this chat.
       const chatBot = participants.find(({ isChatBot }) => isChatBot === true);
-      if (chatBot) {
+      if (Object.keys(chatBot)) {
         //Check if sender has exceeded totalGPTMessagesReceived.
         const sender = participants.find(
           ({ _id }) => _id.toString() === sender_id
@@ -76,10 +82,12 @@ const chatSocket = (io, socket) => {
           Number(totalGPTMessagesReceived) <
           Number(config.gpt.gpt_messages_limit);
 
+        const botName = chatBot.name;
+
         if (canSendMessageToGPT) {
           io.to(chat_url).emit("update-participant-typing", {
             chat_url,
-            message: "QuickChat Bot is typing...",
+            message: `${botName} is typing...`,
           });
 
           const messages = GPT_PARAMETERS.map((message) => {
@@ -120,7 +128,7 @@ const chatSocket = (io, socket) => {
                   .populate([
                     {
                       path: "participants",
-                      select: ["name", "photo", "isChatBot"],
+                      select: ["name", "photo", "isChatBot", "chatBotDetails"],
                     },
                     {
                       path: "messages.sender",

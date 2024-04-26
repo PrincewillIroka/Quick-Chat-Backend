@@ -12,10 +12,27 @@ const ObjectIdType = mongoose.Types.ObjectId;
 
 const createChat = async (req, res) => {
   try {
-    const { creator_id, passcode, chat_name } = req.body;
+    const { creator_id, passcode, chat_name, botName, botPrompt } = req.body;
     const chat_url = generateChatUrl(); //Todo: Ensure chat_url is unique from others in the db Chat model
+    let newBot;
 
-    const participants = [creator_id];
+    //Add bot as a new user.
+    if (botName) {
+      newBot = await User.create({
+        name: botName,
+        isChatBot: true,
+        hasUpdatedUsername: true,
+        chatBotDetails: {
+          isSystemBot: false,
+          isUserBot: true,
+          ...(botPrompt && { botPrompt }),
+          botOwner: creator_id,
+        },
+      });
+    }
+
+    const newBotId = newBot._id;
+    const participants = [creator_id, newBotId];
 
     let encryptedPasscode;
 
@@ -33,7 +50,7 @@ const createChat = async (req, res) => {
     newChat = await newChat.populate([
       {
         path: "participants",
-        select: ["name", "photo", "isChatBot"],
+        select: ["name", "photo", "isChatBot", "chatBotDetails"],
       },
     ]);
     res.send({ success: true, newChat });
@@ -48,10 +65,14 @@ const uploadFile = async (req, res) => {
     const { chat_id, chat_url, sender_id, message_id } = req.body;
     const files = req.files || [];
 
-    const sizeOfFilesForUpload = Object.values(files).reduce(
-      (acc, cur) => acc + cur.size,
-      0
-    );
+    console.log("files", files);
+
+    const sizeOfFilesForUpload = Object.values(files).reduce((acc, cur) => {
+      console.log("cur", cur);
+      const decryptedCur = decryptData(cur);
+      console.log("decryptedCur", decryptedCur);
+      return acc + decryptedCur.size;
+    }, 0);
 
     let maxFileSizeErrorMessage;
     const isGreaterThanMaxFileSize = sizeOfFilesForUpload > 2000000;
@@ -80,7 +101,8 @@ const uploadFile = async (req, res) => {
 
     (async () => {
       for (const [key, value] of Object.entries(files)) {
-        await handleFileUpload(key, value);
+        const decryptedValue = decryptData(value);
+        await handleFileUpload(key, decryptedValue);
       }
 
       async function handleFileUpload(key, value) {
@@ -229,7 +251,7 @@ const updateAccessRight = async (req, res) => {
           .populate([
             {
               path: "participants",
-              select: ["name", "photo", "isChatBot"],
+              select: ["name", "photo", "isChatBot", "chatBotDetails"],
             },
             {
               path: "messages.sender",
