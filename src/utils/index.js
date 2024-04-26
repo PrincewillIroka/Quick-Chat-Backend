@@ -179,10 +179,19 @@ const decryptData = (content) => {
   return decryptedData;
 };
 
+const hasNotExceedeGPTMessages = ({ sender }) => {
+  const { totalGPTMessagesReceived } = sender || {};
+  const canSendMessageToGPT =
+    Number(totalGPTMessagesReceived) < Number(config.gpt.gpt_messages_limit);
+
+  return canSendMessageToGPT;
+};
+
 export {
   generateChatUrl,
   getTokenFromCookie,
   handleToken,
   encryptData,
   decryptData,
+  hasNotExceedeGPTMessages,
 };

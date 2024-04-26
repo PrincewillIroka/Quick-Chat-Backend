@@ -1,11 +1,10 @@
 import mongoose from "mongoose";
 import Chat from "../models/Chat";
 import User from "../models/User";
-import { getTokenFromCookie, decryptData } from "../utils";
+import { decryptData, hasNotExceedeGPTMessages } from "../utils";
 import redis from "../redis";
 import { GPT_PARAMETERS } from "../constants";
-import config from "../config";
-import { openai } from "../services";
+import { createMessage } from "../services/GPTServices";
 
 const ObjectIdType = mongoose.Types.ObjectId;
 
@@ -37,7 +36,13 @@ const chatSocket = (io, socket) => {
         .populate([
           {
             path: "participants",
-            select: ["name", "photo", "isChatBot", "totalGPTMessagesReceived"],
+            select: [
+              "name",
+              "photo",
+              "isChatBot",
+              "totalGPTMessagesReceived",
+              "chatBotDetails",
+            ],
           },
           {
             path: "messages.sender",
@@ -66,20 +71,17 @@ const chatSocket = (io, socket) => {
 
       //Handle send message to GPT if chatbot is a participant in this chat.
       const chatBot = participants.find(({ isChatBot }) => isChatBot === true);
-      if (chatBot) {
+      if (Object.keys(chatBot)) {
         //Check if sender has exceeded totalGPTMessagesReceived.
         const sender = participants.find(
           ({ _id }) => _id.toString() === sender_id
         );
-        const { totalGPTMessagesReceived } = sender || {};
-        const canSendMessageToGPT =
-          Number(totalGPTMessagesReceived) <
-          Number(config.gpt.gpt_messages_limit);
 
-        if (canSendMessageToGPT) {
+        if (hasNotExceedeGPTMessages({ sender })) {
+          const botName = chatBot.name;
           io.to(chat_url).emit("update-participant-typing", {
             chat_url,
-            message: "QuickChat Bot is typing...",
+            message: `${botName} is typing...`,
           });
 
           const messages = GPT_PARAMETERS.map((message) => {
@@ -87,17 +89,18 @@ const chatSocket = (io, socket) => {
               message.content = decryptedContent;
             }
 
+            if (message.role === "system") {
+              const botPrompt = chatBot?.chatBotDetails?.botPrompt;
+              message.content = botPrompt || message.content;
+            }
+
             return message;
           });
 
-          await openai.chat.completions
-            .create({
-              messages,
-              model: config.gpt.gpt_model,
-            })
-            .then(async (response) => {
-              const actualResponse = response?.choices[0]?.message?.content;
-
+          await createMessage({
+            messages,
+          })
+            .then(async (actualResponse) => {
               if (actualResponse) {
                 const message_id = new ObjectIdType();
                 let { _id: chatBotId = "" } = chatBot || {};
@@ -120,7 +123,7 @@ const chatSocket = (io, socket) => {
                   .populate([
                     {
                       path: "participants",
-                      select: ["name", "photo", "isChatBot"],
+                      select: ["name", "photo", "isChatBot", "chatBotDetails"],
                     },
                     {
                       path: "messages.sender",
@@ -330,6 +333,32 @@ const chatSocket = (io, socket) => {
     //Todo: Save notification that "chat was deleted" to Redis
 
     ack({ success: true, chat_id, participant_id, newMessage });
+  });
+
+  socket.on("clear-chat", async (args, ack) => {
+    let { chat_id } = args;
+
+    const chat = await Chat.findById(chat_id).lean();
+
+    if (!chat) {
+      ack({ success: false, message: "Chat not found!" });
+      return;
+    }
+
+    const updatedChat = await Chat.findOneAndUpdate(
+      { _id: chat_id },
+      {
+        messages: [],
+      },
+      { new: true }
+    ).lean();
+
+    //When a user clears the chat, other participants should be notified.
+    socket.broadcast.emit("chat-cleared", { chat_id, updatedChat });
+
+    //Todo: Save notification that "chat was cleared" to Redis
+
+    ack({ success: true, chat_id });
   });
 };
 

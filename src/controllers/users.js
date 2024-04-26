@@ -6,7 +6,7 @@ import Chat from "../models/Chat";
 import User from "../models/User";
 import { handleToken } from "../utils";
 import config from "../config";
-import { uploader } from "../services";
+import { uploader } from "../services/fileUploadServices";
 import redis from "../redis";
 
 const ObjectIdType = mongoose.Types.ObjectId;
@@ -31,7 +31,7 @@ const getChats = async (req, res) => {
       .populate([
         {
           path: "participants",
-          select: ["name", "photo", "isChatBot"],
+          select: ["name", "photo", "isChatBot", "chatBotDetails"],
         },
         {
           path: "messages.sender",
@@ -79,7 +79,7 @@ const getChats = async (req, res) => {
           .populate([
             {
               path: "participants",
-              select: ["name", "photo", "isChatBot"],
+              select: ["name", "photo", "isChatBot", "chatBotDetails"],
             },
             {
               path: "messages.sender",
@@ -248,6 +248,12 @@ const setUpChatBot = async () => {
         bs_token,
         isChatBot: true,
         hasUpdatedUsername: true,
+        chatBotDetails: {
+          isSystemBot: true,
+          isUserBot: false,
+          botPrompt:
+            "Your name is QuickChatBot and you are a helpful assistant that can chat with multiple users.",
+        },
       });
     }
   } catch (error) {
