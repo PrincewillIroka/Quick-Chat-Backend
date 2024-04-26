@@ -1,10 +1,9 @@
 import mongoose from "mongoose";
 import Chat from "../models/Chat";
 import User from "../models/User";
-import { getTokenFromCookie, decryptData } from "../utils";
+import { decryptData, hasNotExceedeGPTMessages } from "../utils";
 import redis from "../redis";
 import { GPT_PARAMETERS } from "../constants";
-import config from "../config";
 import { createMessage } from "../services/GPTServices";
 
 const ObjectIdType = mongoose.Types.ObjectId;
@@ -77,14 +76,9 @@ const chatSocket = (io, socket) => {
         const sender = participants.find(
           ({ _id }) => _id.toString() === sender_id
         );
-        const { totalGPTMessagesReceived } = sender || {};
-        const canSendMessageToGPT =
-          Number(totalGPTMessagesReceived) <
-          Number(config.gpt.gpt_messages_limit);
 
-        const botName = chatBot.name;
-
-        if (canSendMessageToGPT) {
+        if (hasNotExceedeGPTMessages({ sender })) {
+          const botName = chatBot.name;
           io.to(chat_url).emit("update-participant-typing", {
             chat_url,
             message: `${botName} is typing...`,
