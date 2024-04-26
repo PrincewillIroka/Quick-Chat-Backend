@@ -353,10 +353,10 @@ const chatSocket = (io, socket) => {
       { new: true }
     ).lean();
 
-    //When a user deletes the chat, other participants should be notified.
+    //When a user clears the chat, other participants should be notified.
     socket.broadcast.emit("chat-cleared", { chat_id, updatedChat });
 
-    //Todo: Save notification that "chat was deleted" to Redis
+    //Todo: Save notification that "chat was cleared" to Redis
 
     ack({ success: true, chat_id });
   });
