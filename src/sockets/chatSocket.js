@@ -334,6 +334,32 @@ const chatSocket = (io, socket) => {
 
     ack({ success: true, chat_id, participant_id, newMessage });
   });
+
+  socket.on("clear-chat", async (args, ack) => {
+    let { chat_id } = args;
+
+    const chat = await Chat.findById(chat_id).lean();
+
+    if (!chat) {
+      ack({ success: false, message: "Chat not found!" });
+      return;
+    }
+
+    const updatedChat = await Chat.findOneAndUpdate(
+      { _id: chat_id },
+      {
+        messages: [],
+      },
+      { new: true }
+    ).lean();
+
+    //When a user deletes the chat, other participants should be notified.
+    socket.broadcast.emit("chat-cleared", { chat_id, updatedChat });
+
+    //Todo: Save notification that "chat was deleted" to Redis
+
+    ack({ success: true, chat_id });
+  });
 };
 
 export default chatSocket;
