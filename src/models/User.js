@@ -9,7 +9,7 @@ const UserShema = new mongoose.Schema(
     hasUpdatedUsername: { type: Boolean, default: false },
     isChatBot: { type: Boolean, default: false },
     isDarkMode: { type: Boolean, default: false },
-    totalGPTMessagesReceived: { type: Number, default: 0 },
+    totalGPTMessagesAvailable: { type: Number, default: 10 },
     totalSizeOfFilesUploaded: { type: Number, default: 0 },
     chatBotDetails: {
       isSystemBot: { type: Boolean, default: false },

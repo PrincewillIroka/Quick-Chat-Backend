@@ -180,9 +180,8 @@ const decryptData = (content) => {
 };
 
 const hasNotExceedeGPTMessages = ({ sender }) => {
-  const { totalGPTMessagesReceived } = sender || {};
-  const canSendMessageToGPT =
-    Number(totalGPTMessagesReceived) < Number(config.gpt.gpt_messages_limit);
+  const { totalGPTMessagesAvailable } = sender || {};
+  const canSendMessageToGPT = Number(totalGPTMessagesAvailable) > 0;
 
   return canSendMessageToGPT;
 };
