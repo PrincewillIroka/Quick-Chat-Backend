@@ -242,8 +242,8 @@ const chatSocket = (io, socket) => {
       .emit("update-participant-typing", { chat_url, message });
   });
 
-  socket.on("rename-chat", async (args, ack) => {
-    let { chat_id, chat_name } = args;
+  socket.on("edit-chat", async (args, ack) => {
+    let { chat_id, chat_name, encryptedPasscode } = args;
 
     const chat = await Chat.findById(chat_id).lean();
 
@@ -256,6 +256,7 @@ const chatSocket = (io, socket) => {
       { _id: chat_id },
       {
         ...(chat_name && { chat_name }),
+        ...(encryptedPasscode && { passcode: encryptedPasscode }),
       },
       { new: true }
     ).lean();
@@ -263,9 +264,9 @@ const chatSocket = (io, socket) => {
     chat_name = updatedChat.chat_name;
 
     // When a user updates the chat_name, other participants should be notified.
-    socket.broadcast.emit("chat-renamed", { chat_name, chat_id });
+    socket.broadcast.emit("chat-edited", { chat_name, chat_id });
 
-    //Todo: Save notification that chat was renamed to Redis
+    //Todo: Save notification that chat was edited to Redis
 
     ack({ success: true, chat_name });
   });
