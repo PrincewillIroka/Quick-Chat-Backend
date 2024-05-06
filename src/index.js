@@ -24,7 +24,7 @@ const port = config.port;
 const server = http.createServer(app);
 const io = new Server(server);
 
-const whitelist = [config.frontendAppUrl];
+const whitelist = [config.frontendAppUrl, config.serverAddress];
 const corsOptions = {
   credentials: true,
   origin: function (origin, callback) {
