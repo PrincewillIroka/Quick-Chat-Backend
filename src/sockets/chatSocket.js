@@ -264,9 +264,9 @@ const chatSocket = (io, socket) => {
     chat_name = updatedChat.chat_name;
 
     // When a user updates the chat_name, other participants should be notified.
-    socket.broadcast.emit("chat-renamed", { chat_name, chat_id });
+    socket.broadcast.emit("chat-edited", { chat_name, chat_id });
 
-    //Todo: Save notification that chat was renamed to Redis
+    //Todo: Save notification that chat was edited to Redis
 
     ack({ success: true, chat_name });
   });
