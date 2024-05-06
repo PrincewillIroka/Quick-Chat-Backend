@@ -12,7 +12,7 @@ const ObjectIdType = mongoose.Types.ObjectId;
 
 const createChat = async (req, res) => {
   try {
-    const { creator_id, passcode, chat_name, botName, botPrompt } = req.body;
+    const { creator_id, encryptedPasscode, chat_name, botName, botPrompt } = req.body;
     const chat_url = generateChatUrl(); //Todo: Ensure chat_url is unique from others in the db Chat model
     let newBot, newBotId;
     const participants = [creator_id];
@@ -33,12 +33,6 @@ const createChat = async (req, res) => {
 
       newBotId = newBot._id;
       participants.push(newBotId);
-    }
-
-    let encryptedPasscode;
-
-    if (passcode) {
-      encryptedPasscode = encryptData(passcode);
     }
 
     let newChat = await Chat.create({
