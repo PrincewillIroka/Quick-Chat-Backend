@@ -242,8 +242,8 @@ const chatSocket = (io, socket) => {
       .emit("update-participant-typing", { chat_url, message });
   });
 
-  socket.on("rename-chat", async (args, ack) => {
-    let { chat_id, chat_name } = args;
+  socket.on("edit-chat", async (args, ack) => {
+    let { chat_id, chat_name, encryptedPasscode } = args;
 
     const chat = await Chat.findById(chat_id).lean();
 
@@ -256,6 +256,7 @@ const chatSocket = (io, socket) => {
       { _id: chat_id },
       {
         ...(chat_name && { chat_name }),
+        ...(encryptedPasscode && { passcode: encryptedPasscode }),
       },
       { new: true }
     ).lean();
