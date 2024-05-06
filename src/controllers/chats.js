@@ -15,8 +15,7 @@ const createChat = async (req, res) => {
     const { creator_id, passcode, chat_name, botName, botPrompt } = req.body;
     const chat_url = generateChatUrl(); //Todo: Ensure chat_url is unique from others in the db Chat model
     let newBot, newBotId;
-
-    const participants = [participants];
+    const participants = [creator_id];
 
     //Add bot as a new user.
     if (botName) {
