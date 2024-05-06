@@ -14,7 +14,9 @@ const createChat = async (req, res) => {
   try {
     const { creator_id, passcode, chat_name, botName, botPrompt } = req.body;
     const chat_url = generateChatUrl(); //Todo: Ensure chat_url is unique from others in the db Chat model
-    let newBot;
+    let newBot, newBotId;
+
+    const participants = [participants];
 
     //Add bot as a new user.
     if (botName) {
@@ -29,10 +31,10 @@ const createChat = async (req, res) => {
           botOwner: creator_id,
         },
       });
-    }
 
-    const newBotId = newBot._id;
-    const participants = [creator_id, newBotId];
+      newBotId = newBot._id;
+      participants.push(newBotId);
+    }
 
     let encryptedPasscode;
 
@@ -64,7 +66,6 @@ const uploadFile = async (req, res) => {
   try {
     const { chat_id, chat_url, sender_id, message_id } = req.body;
     const files = req.files || [];
-
 
     const sizeOfFilesForUpload = Object.values(files).reduce((acc, cur) => {
       const decryptedCur = decryptData(cur);

@@ -40,7 +40,7 @@ const chatSocket = (io, socket) => {
               "name",
               "photo",
               "isChatBot",
-              "totalGPTMessagesReceived",
+              "totalGPTMessagesAvailable",
               "chatBotDetails",
             ],
           },
@@ -63,7 +63,7 @@ const chatSocket = (io, socket) => {
       const newMessageForReceiver = chatMessages.find(
         (msg) => msg._id == message_id.toString()
       );
-      socket.broadcast.to(chat_url).emit("new-message-received", {
+      io.to(chat_url).emit("new-message-received", {
         chat_id,
         message_id,
         newMessage: newMessageForReceiver,
@@ -72,7 +72,7 @@ const chatSocket = (io, socket) => {
       //Handle send message to GPT if chatbot is a participant in this chat.
       const chatBot = participants.find(({ isChatBot }) => isChatBot === true);
       if (Object.keys(chatBot)) {
-        //Check if sender has exceeded totalGPTMessagesReceived.
+        //Check if sender has exceeded totalGPTMessagesAvailable.
         const sender = participants.find(
           ({ _id }) => _id.toString() === sender_id
         );
@@ -147,10 +147,10 @@ const chatSocket = (io, socket) => {
                   chat_url,
                 });
 
-                //Update totalGPTMessagesReceived for this sender
+                //Update totalGPTMessagesAvailable for this sender
                 await User.findOneAndUpdate(
                   { _id: sender_id },
-                  { $inc: { totalGPTMessagesReceived: 1 } },
+                  { $inc: { totalGPTMessagesAvailable: -1 } },
                   { new: true }
                 );
               }
@@ -163,7 +163,10 @@ const chatSocket = (io, socket) => {
               console.error(error);
             });
         } else {
-          // Todo: Send response to user that they've exceeded totalGPTMessagesReceived
+          io.to(sender_id).emit("warning-exceeded-gpt-messages", {
+            message:
+              "Chat bot limit exceeded. Subscribe to continue using the bot.",
+          });
         }
       }
 
@@ -216,12 +219,10 @@ const chatSocket = (io, socket) => {
             // If this chat isn't the user's current selected chat and the user is online,
             // Emit an event to the user, informing them that a new message was sent to the chat.
 
-            socket.broadcast
-              .to(participantId)
-              .emit("new-message-notification", {
-                chat_id,
-                value,
-              });
+            io.to(participantId).emit("new-message-notification", {
+              chat_id,
+              value,
+            });
           }
         }
       });
