@@ -89,7 +89,7 @@ const chatSocket = (io, socket) => {
               message.content = decryptedContent;
             }
 
-            if (message.role === "system") {
+            if (message.role === "assistant") {
               const botPrompt = chatBot?.chatBotDetails?.botPrompt;
               message.content = botPrompt || message.content;
             }
