@@ -8,7 +8,7 @@ export const validator = (req, res, next) => {
   next();
 };
 
-export const authenticateUserData = [body("bs_token").isString()];
+export const authenticateUserData = [body("bs_token").optional().isString()];
 
 export const getChatsData = [
   body("bs_token").isString(),

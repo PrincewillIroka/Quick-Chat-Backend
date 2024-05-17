@@ -16,4 +16,8 @@ export const GPT_PARAMETERS = [
     role: "user",
     content: "",
   },
+  {
+    role: "assistant",
+    content: "",
+  },
 ];
