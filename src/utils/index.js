@@ -25,29 +25,48 @@ const getTokenFromCookie = (headers) => {
   return bs_token;
 };
 
-const handleToken = async () => {
+const handleToken = () => {
+  // let bs_token = getTokenFromCookie(headers);
+  // valdateToken()
+
+  const uidv4 = uuidv4();
+  const bs_token = `${uidv4}_${Date.now()}`;
+  return bs_token;
+};
+
+const createNewUser = async ({ bs_token, userNameIndex }) => {
+  const user = await User.create({
+    bs_token,
+    name: `User ${userNameIndex}`,
+  })
+    .then((doc) => {
+      return doc;
+    })
+    .catch(async (err) => {
+      if (err.message.includes("E11000 duplicate key error")) {
+        userNameIndex = userNameIndex + 1;
+        return await createNewUser({ bs_token, userNameIndex });
+      }
+    });
+
+  return user;
+};
+
+const handleNewUser = async (bs_token) => {
   try {
-    // let bs_token = getTokenFromCookie(headers);
-
-    // valdateToken()
-
-    let bs_token;
-
-    if (!bs_token) {
-      const uidv4 = uuidv4();
-      bs_token = `${uidv4}_${Date.now()}`;
-
+    if (bs_token) {
       // Create new user here
       const usersThatHaveNotUpdatedUsername = await User.countDocuments({
         hasUpdatedUsername: false,
       });
       const userNameIndex = usersThatHaveNotUpdatedUsername + 1;
-      const user = await User.create({
-        bs_token,
-        name: `User ${userNameIndex}`,
-      });
 
-      const chatBot = await User.findOne({ isChatBot: true });
+      const user = await createNewUser({ bs_token, userNameIndex });
+
+      const chatBot = await User.findOne({
+        isChatBot: true,
+        "chatBotDetails.isSystemBot": true,
+      }).lean();
 
       const creator_id = user._id;
       const chatBotId = chatBot._id;
@@ -142,8 +161,6 @@ const handleToken = async () => {
         { new: true }
       );
     }
-
-    return bs_token;
   } catch (err) {
     console.error(err);
   }
@@ -193,4 +210,5 @@ export {
   encryptData,
   decryptData,
   hasNotExceedeGPTMessages,
+  handleNewUser,
 };

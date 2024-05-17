@@ -4,7 +4,7 @@ import path from "path";
 import mongoose from "mongoose";
 import Chat from "../models/Chat";
 import User from "../models/User";
-import { handleToken } from "../utils";
+import { handleToken, hasNotExceedeGPTMessages, handleNewUser } from "../utils";
 import config from "../config";
 import { uploader } from "../services/fileUploadServices";
 import redis from "../redis";
@@ -48,14 +48,14 @@ const getChats = async (req, res) => {
 
     if (chatFound) {
       const { passcode = "", participants = [] } = chatFound || {};
-      const isParticipant = participants.find(
+      const participantFound = participants.find(
         (participant) => participant?._id.toString() === user_id
       );
 
       //If user isn't a participant && if this chat doesn't have a passcode.
       //Add user as chat participant.
 
-      if (!isParticipant && !passcode) {
+      if (!participantFound && !passcode) {
         const newMessage = {
           content: `${user?.name} joined this chat.`,
           sender: user_id,
@@ -95,10 +95,7 @@ const getChats = async (req, res) => {
         chats = chats.map((ch) => (ch.chat_url === chatUrlParam ? chat : ch));
 
         // Broadcast to other participants that user has joined this chat
-        const { _id: chat_id, participants = [] } = chat;
-        const participantFound = participants.find(
-          (participant) => participant._id.toString() === user_id
-        );
+        const { _id: chat_id } = chat;
 
         req.io.emit("participant-has-joined-chat", {
           participant: participantFound,
@@ -106,6 +103,28 @@ const getChats = async (req, res) => {
           newMessage,
         });
 
+        // Send message to GPT that a new user has joined.
+
+        if (hasNotExceedeGPTMessages({ sender: participantFound })) {
+          // const chatBot = participants.find(
+          //   ({ isChatBot }) => isChatBot === true
+          // );
+          // const botName = chatBot.name;
+          // io.to(chatUrlParam).emit("update-participant-typing", {
+          //   chat_url: chatUrlParam,
+          //   message: `${botName} is typing...`,
+          // });
+          // const messages = GPT_PARAMETERS.map((message) => {
+          //   if (message.role === "user") {
+          //     message.content = decryptedContent;
+          //   }
+          //   if (message.role === "system") {
+          //     const botPrompt = chatBot?.chatBotDetails?.botPrompt;
+          //     message.content = botPrompt || message.content;
+          //   }
+          //   return message;
+          // });
+        }
         //Todo: Send redis notification to participants that are'nt online, informing them that a
         //a new user has joined the chat.
       }
@@ -124,9 +143,9 @@ const authenticateUser = async (req, res) => {
     let { bs_token } = req.body;
 
     if (!bs_token) {
-      bs_token = await handleToken();
+      bs_token = handleToken();
+      await handleNewUser(bs_token);
     }
-
     const user = await User.findOne({ bs_token });
 
     // const { environment = "", frontendAppUrl = "" } = config;
